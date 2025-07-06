@@ -778,6 +778,18 @@ app.post("/api/admin/verify-secret", verifyToken, async (req, res) => {
   }
 });
 // ---------------------------\
+// React frontend build serving
+// ---------------------------
+
+// Serve React build files (make sure this is AFTER all other routes)
+app.use(express.static(path.join(__dirname, "../client/build")));
+
+app.get("*", (req, res) => {
+  res.sendFile(path.resolve(__dirname, "../client/build", "index.html"));
+});
+
+// ---------------------------\
+// ---------------------------\
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
