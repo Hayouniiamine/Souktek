@@ -569,7 +569,7 @@ app.post("/api/admin/verify-secret", (req, res) => {
 });
 
 // Default catch-all handler to serve React app for any other routes
-app.get("*", (req, res) => {
+app.use((req, res) => {
   res.sendFile(path.join(__dirname, "../client/build/index.html"));
 });
 
