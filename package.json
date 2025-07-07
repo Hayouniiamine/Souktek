@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "private": true,
 "scripts": {
-  "postinstall": "ls -la client && npm install --prefix client && npm run build --prefix client",
+  "postinstall": "npm install --prefix client && npm run build --prefix client",
+  "build": "npm run build --prefix client",
   "start": "node server/index.js"
 }
 
-}
+
