@@ -5,7 +5,6 @@ import Footer from './Footer';
 import { useCart } from "./context/CartContext";
 
 const Checkout = () => {
-  const location = useLocation();
   const navigate = useNavigate();
   const { cart, getCartTotalPrice } = useCart();
 

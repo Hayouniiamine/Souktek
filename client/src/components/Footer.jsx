@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom"; // Import Link from react-router-dom
+import { Link } from "react-router-dom";
 
 export default function Footer() {
   const productIcons = [
@@ -100,16 +100,27 @@ export default function Footer() {
           <h2 className="text-xl font-semibold mb-4">Legal</h2>
           <ul className="space-y-2 text-sm text-gray-400">
             <li>
-              {/* Link to the TermsConditions page */}
               <Link to="/terms-conditions" className="hover:text-blue-500">
                 Terms & Conditions
               </Link>
             </li>
             <li>
-              <a href="#">Privacy Policy</a>
+              <button
+                type="button"
+                className="text-gray-400 hover:text-blue-500 underline cursor-pointer bg-transparent border-none p-0"
+                onClick={() => alert("Feature coming soon!")}
+              >
+                Privacy Policy
+              </button>
             </li>
             <li>
-              <a href="#">Refund Policy</a>
+              <button
+                type="button"
+                className="text-gray-400 hover:text-blue-500 underline cursor-pointer bg-transparent border-none p-0"
+                onClick={() => alert("Feature coming soon!")}
+              >
+                Refund Policy
+              </button>
             </li>
           </ul>
         </div>
@@ -119,13 +130,31 @@ export default function Footer() {
           <h2 className="text-xl font-semibold mb-4">Support</h2>
           <ul className="space-y-2 text-sm text-gray-400">
             <li>
-              <a href="#">Help Center</a>
+              <button
+                type="button"
+                className="text-gray-400 hover:text-blue-500 underline cursor-pointer bg-transparent border-none p-0"
+                onClick={() => alert("Feature coming soon!")}
+              >
+                Help Center
+              </button>
             </li>
             <li>
-              <a href="#">How to Buy</a>
+              <button
+                type="button"
+                className="text-gray-400 hover:text-blue-500 underline cursor-pointer bg-transparent border-none p-0"
+                onClick={() => alert("Feature coming soon!")}
+              >
+                How to Buy
+              </button>
             </li>
             <li>
-              <a href="#">Account Support</a>
+              <button
+                type="button"
+                className="text-gray-400 hover:text-blue-500 underline cursor-pointer bg-transparent border-none p-0"
+                onClick={() => alert("Feature coming soon!")}
+              >
+                Account Support
+              </button>
             </li>
           </ul>
         </div>
@@ -138,7 +167,7 @@ export default function Footer() {
               <img
                 key={i}
                 src={`/images/icons/${icon}`}
-                alt={icon.replace(".png", "").replace(".webp", "")}
+                alt={icon.replace(/\.(png|webp|jpg)$/i, "")}
                 className="w-10 h-10 object-contain"
               />
             ))}
