@@ -5,10 +5,12 @@ import Footer from "./Footer";
 import { ShoppingCart } from "lucide-react";
 import { useCart } from "./context/CartContext";
 import API_BASE_URL from "../config";
+
 export default function ProductPage() {
   const { name } = useParams();
   const navigate = useNavigate();
-  const { addToCart } = useCart(); // Use the addToCart function from context
+  const { addToCart } = useCart();
+
   const [product, setProduct] = useState(null);
   const [options, setOptions] = useState([]);
   const [allProducts, setAllProducts] = useState([]);
@@ -28,9 +30,7 @@ export default function ProductPage() {
         const data = await res.json();
         setProduct(data);
 
-        const optionsRes = await fetch(
-          `${API_BASE_URL}/api/product_options/${data.id}`
-        );
+        const optionsRes = await fetch(`${API_BASE_URL}/api/product_options/${data.id}`);
         if (!optionsRes.ok) throw new Error("Options not found");
         const optionsData = await optionsRes.json();
         setOptions(optionsData);
@@ -43,14 +43,12 @@ export default function ProductPage() {
 
     const fetchAll = async () => {
       try {
-        // Added try-catch for fetchAll as well
         const res = await fetch(`${API_BASE_URL}/api/products`);
         if (!res.ok) throw new Error("Failed to fetch all products");
         const data = await res.json();
         setAllProducts(data);
       } catch (err) {
         console.error("Error fetching all products:", err);
-        // Not setting error state for all products as it's not critical for main product display
       }
     };
 
@@ -62,20 +60,15 @@ export default function ProductPage() {
 
   if (loading) return <div className="text-white p-4">Loading...</div>;
   if (error) return <div className="text-red-500 p-4">{error}</div>;
-  if (!product)
-    return <div className="text-white p-4">Product data is not available.</div>;
+  if (!product) return <div className="text-white p-4">Product data is not available.</div>;
 
   const imageUrl = product.img
-    ? `${API_BASE_URL}${
-        product.img.startsWith("/images")
-          ? product.img
-          : "/images/" + product.img
-      }`
+    ? `${API_BASE_URL}${product.img.startsWith("/images") ? product.img : "/images/" + product.img}`
     : "/images/default_image.png";
 
   return (
     <div className="bg-[#0e1117] min-h-screen text-white">
-      {/* Hero */}
+      {/* Hero Section */}
       <div
         className="relative h-64 bg-cover bg-center"
         style={{ backgroundImage: `url(${imageUrl})` }}
@@ -87,12 +80,11 @@ export default function ProductPage() {
         </div>
       </div>
 
+      {/* Product Options */}
       <div className="max-w-4xl mx-auto p-4">
         <h2 className="text-2xl font-semibold mb-4">Available Options</h2>
         {options.length === 0 && (
-          <p className="text-gray-400">
-            No options available for this product.
-          </p>
+          <p className="text-gray-400">No options available for this product.</p>
         )}
         {options.map((option) => (
           <div
@@ -105,13 +97,13 @@ export default function ProductPage() {
             </div>
             <div className="flex items-center gap-4">
               <div className="text-2xl font-bold">
-                ${Number(option.price).toFixed(2)}
+                ${!isNaN(parseFloat(option.price)) ? parseFloat(option.price).toFixed(2) : "0.00"}
               </div>
               <button
                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded flex items-center gap-2"
                 onClick={() => {
-                  addToCart(option, product); // Add to cart using context function
-                  navigate("/basket"); // Navigate to basket
+                  addToCart(option, product);
+                  navigate("/basket");
                 }}
               >
                 <ShoppingCart size={16} /> Buy Now
@@ -121,7 +113,7 @@ export default function ProductPage() {
         ))}
       </div>
 
-      {/* More like this */}
+      {/* More Like This */}
       {moreProducts.length > 0 && (
         <div className="max-w-4xl mx-auto p-4">
           <h2 className="text-xl font-semibold mb-4">More like this</h2>
@@ -133,9 +125,7 @@ export default function ProductPage() {
                 className="bg-[#1c222c] p-4 rounded-xl hover:shadow-xl"
               >
                 <img
-                  src={`${API_BASE_URL}${
-                    p.img?.startsWith("/images") ? p.img : "/images/" + p.img
-                  }`}
+                  src={`${API_BASE_URL}${p.img?.startsWith("/images") ? p.img : "/images/" + p.img}`}
                   alt={p.name}
                   className="w-full h-40 object-contain rounded-md mb-2"
                 />
