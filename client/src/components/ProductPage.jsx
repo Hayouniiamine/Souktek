@@ -96,19 +96,16 @@ export default function ProductPage() {
               <p className="text-gray-400">{option.description}</p>
             </div>
             <div className="flex items-center gap-4">
-<div className="text-2xl font-bold">
-  {(() => {
-    const parsed = parseFloat(option.price);
-    if (isNaN(parsed)) {
-      console.warn("Invalid price in option:", option); // ✅ Add this
-      return "$0.00";
-    }
-    return `$${parsed.toFixed(2)}`;
-  })()}
-</div>
-
-
-
+              <div className="text-2xl font-bold">
+                {(() => {
+                  const parsed = parseFloat(option.price);
+                  if (isNaN(parsed)) {
+                    console.warn("Invalid price in option:", option);
+                    return "$0.00";
+                  }
+                  return `$${parsed.toFixed(2)}`;
+                })()}
+              </div>
               <button
                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded flex items-center gap-2"
                 onClick={() => {
@@ -141,6 +138,16 @@ export default function ProductPage() {
                 />
                 <h3 className="text-lg font-semibold">{p.name}</h3>
                 <p className="text-gray-400 text-sm">{p.description}</p>
+                <div className="text-xl font-bold mt-2">
+                  {(() => {
+                    const parsed = parseFloat(p.price);
+                    if (isNaN(parsed)) {
+                      console.warn("Invalid price for product in 'More like this':", p);
+                      return "Price N/A";
+                    }
+                    return `$${parsed.toFixed(2)}`;
+                  })()}
+                </div>
               </Link>
             ))}
           </div>
