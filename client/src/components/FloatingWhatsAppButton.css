@@ -1,0 +1,51 @@
+/* client/src/components/FloatingWhatsAppButton.css */
+
+.whatsapp-float {
+    position: fixed; /* Makes it stay in place on scroll */
+    width: 60px;     /* Size of the button */
+    height: 60px;
+    bottom: 40px;    /* Distance from the bottom of the viewport */
+    left: 40px;      /* Distance from the left of the viewport */
+    /* If you want it on the right, use: right: 40px; and remove left: 40px; */
+
+    background-color: #25d366; /* WhatsApp green */
+    color: #FFF; /* Icon color (if using text/svg directly) */
+    border-radius: 50%; /* Makes it a perfect circle */
+    text-align: center;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Subtle shadow for depth */
+    z-index: 1000; /* Ensures it's on top of most other elements */
+
+    /* Flexbox for centering the image inside the circle */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    /* Smooth transition for hover effects */
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.whatsapp-float img {
+    width: 35px; /* Size of the WhatsApp icon image inside the button */
+    height: 35px;
+    object-fit: contain; /* Ensures the image fits without distortion */
+}
+
+/* Hover effects */
+.whatsapp-float:hover {
+    background-color: #1DA851; /* Slightly darker green on hover */
+    transform: scale(1.08); /* Makes it slightly larger on hover */
+}
+
+/* Optional: Media query for smaller screens */
+@media (max-width: 768px) {
+    .whatsapp-float {
+        width: 50px;
+        height: 50px;
+        bottom: 20px;
+        left: 20px; /* Or right: 20px; */
+    }
+    .whatsapp-float img {
+        width: 30px;
+        height: 30px;
+    }
+}
