@@ -572,10 +572,23 @@ app.post("/api/admin/verify-secret", (req, res) => {
 app.use((req, res) => {
   res.sendFile(path.join(__dirname, "../client/build/index.html"));
 });
+// --- Quick DB‑connect test on boot ---------------------------------
+pool.connect()
+  .then(client => {
+    return client.query('SELECT NOW()')        // any light query is fine
+      .then(res => {
+        console.log('✅  DB connected – current time:', res.rows[0].now);
+        client.release();
+      });
+  })
+  .catch(err => {
+    console.error('❌  DB connection error:', err.message || err);
+    // optional: process.exit(1);   // crash app so Railway restarts until env is fixed
+  });
+// -------------------------------------------------------------------
 
 // Port
-const PORT = process.env.PORT;
-
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Server started on port ${PORT}`);
+  console.log(`✅ Server running on port ${PORT}`);
 });
