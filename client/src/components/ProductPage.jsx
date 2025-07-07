@@ -97,10 +97,16 @@ export default function ProductPage() {
             </div>
             <div className="flex items-center gap-4">
 <div className="text-2xl font-bold">
-  {!isNaN(parseFloat(option.price))
-    ? `$${parseFloat(option.price).toFixed(2)}`
-    : "$0.00"}
+  {(() => {
+    const parsed = parseFloat(option.price);
+    if (isNaN(parsed)) {
+      console.warn("Invalid price in option:", option); // ✅ Add this
+      return "$0.00";
+    }
+    return `$${parsed.toFixed(2)}`;
+  })()}
 </div>
+
 
 
               <button
