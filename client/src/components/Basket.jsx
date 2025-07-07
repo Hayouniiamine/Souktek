@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import Footer from './Footer';
 import Navbar from './Navbar';
 import { useCart } from "./context/CartContext";
+import { API_BASE_URL } from '../config';
 
 const Basket = () => {
   const navigate = useNavigate();
@@ -54,7 +55,7 @@ const Basket = () => {
                 <img
                   src={
                     item.img
-                      ? `http://localhost:5000${
+                      ? `${API_BASE_URL}${
                           item.img.startsWith("/images")
                             ? item.img
                             : "/images/" + item.img
@@ -65,7 +66,6 @@ const Basket = () => {
                   className="w-4/5 h-4/5 object-contain"
                 />
               </div>
-
               <div className="flex-grow flex flex-col text-[#e0e0e0] text-center sm:text-left">
                 <div className="font-semibold text-lg mb-1">
                   {item.name}
@@ -74,36 +74,32 @@ const Basket = () => {
                   {item.optionLabel || item.option || "Standard Option"}
                 </div>
               </div>
-
               <div className="flex items-center gap-2 flex-shrink-0 mt-3 sm:mt-0">
-                <div className="flex items-center bg-[#1a1d22] rounded-md overflow-hidden">
+                <div className="flex items-center space-x-2">
                   <button
-                    onClick={() => updateQuantity(item.cartItemId, -1)}
-                    aria-label="Decrease quantity"
-                    className="bg-transparent border-none text-[#e0e0e0] w-7 h-7 text-lg cursor-pointer flex items-center justify-center border-r border-[#333]"
+                    className="bg-gray-700 text-white px-2 py-1 rounded hover:bg-gray-600"
+                    onClick={() => updateQuantity(item.cartItemId, item.quantity - 1)}
+                    disabled={item.quantity <= 1}
                   >
-                    −
+                    -
                   </button>
-                  <span className="min-w-8 text-center font-semibold text-base text-[#e0e0e0]">
-                    {item.quantity}
-                  </span>
+                  <span className="text-white">{item.quantity}</span>
                   <button
-                    onClick={() => updateQuantity(item.cartItemId, 1)}
-                    aria-label="Increase quantity"
-                    className="bg-transparent border-none text-[#e0e0e0] w-7 h-7 text-lg cursor-pointer flex items-center justify-center border-l border-[#333]"
+                    className="bg-gray-700 text-white px-2 py-1 rounded hover:bg-gray-600"
+                    onClick={() => updateQuantity(item.cartItemId, item.quantity + 1)}
                   >
                     +
                   </button>
                 </div>
-
-                <div className="font-bold text-lg text-[#e0e0e0] min-w-20 text-right">
-                  TND{(item.price * item.quantity).toFixed(2)}
+                <div className="text-white font-semibold flex-shrink-0 w-20 text-right">
+                  ${(item.price * item.quantity).toFixed(2)}
                 </div>
                 <button
-                    onClick={() => removeFromCart(item.cartItemId)}
-                    className="bg-red-600 text-white border-none rounded px-2.5 py-1.5 cursor-pointer text-xs ml-2"
+                  className="text-red-500 hover:text-red-700 ml-4 flex-shrink-0"
+                  onClick={() => removeFromCart(item.cartItemId)}
+                  aria-label={`Remove ${item.name} from cart`}
                 >
-                    Remove
+                  &#x2715; {/* Unicode 'X' mark */}
                 </button>
               </div>
             </div>
@@ -111,29 +107,29 @@ const Basket = () => {
         </div>
 
         {/* Right Column: Order Summary */}
-        <div className="flex flex-col gap-4 flex-1 bg-[#22252a] rounded-lg p-5 shadow-md text-[#e0e0e0] w-full md:w-1/3 md:mt-20 h-fit">
-          <div className="font-semibold text-lg mb-2">
+        <div className="bg-[#22252a] rounded-lg p-6 shadow-xl md:w-1/3 w-full sticky top-5">
+          <h2 className="text-white text-2xl font-semibold mb-5 border-b border-gray-700 pb-4">
             Order Summary
+          </h2>
+
+          <div className="flex justify-between text-[#e0e0e0] mb-3">
+            <span>Subtotal:</span>
+            <span>${subtotal.toFixed(2)}</span>
           </div>
 
-          <div className="flex justify-between items-center pb-2 border-b border-[#333]">
-            <span className="text-sm text-gray-400">Subtotal</span>
-            <span className="font-semibold text-base">
-              TND{subtotal.toFixed(2)}
-            </span>
+          <div className="flex justify-between text-[#e0e0e0] mb-5 border-b border-gray-700 pb-4">
+            <span>Shipping:</span>
+            <span>Free</span>
           </div>
 
-          <div className="flex justify-between items-center pt-2">
-            <span className="font-bold text-lg">Total</span>
-            <span className="font-bold text-lg">
-              TND{total.toFixed(2)}
-            </span>
+          <div className="flex justify-between text-white font-bold text-lg mb-6">
+            <span>Total:</span>
+            <span>${total.toFixed(2)}</span>
           </div>
 
           <button
-            onClick={() => navigate("/checkout")}
             className="w-full bg-blue-600 border-none py-3 rounded-md font-semibold text-base text-white cursor-pointer uppercase tracking-wider mt-5 transition-colors duration-200 hover:bg-blue-700"
-          >
+            >
             Continue to Checkout
           </button>
         </div>
@@ -160,7 +156,7 @@ const Basket = () => {
             <div className="text-4xl mb-2">✅</div>
             <h3 className="font-semibold text-lg">Secure & Easy</h3>
             <p className="text-gray-400 text-sm mt-1">
-              Our checkout process is secure and easy to use.
+              Your payments are secured by an SSL certificate.
             </p>
           </div>
         </div>

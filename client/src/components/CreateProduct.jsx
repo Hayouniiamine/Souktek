@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../config';
 
 const CreateProduct = () => {
   const navigate = useNavigate();
@@ -50,45 +51,63 @@ const CreateProduct = () => {
     formData.append('price', price);
     formData.append('description', description);
     formData.append('type', type);
-    if (image) formData.append('image', image);
 
-    // Append options as JSON string
-    formData.append('options', JSON.stringify(options));
-
-    // Debug log form data before sending
-    for (let pair of formData.entries()) {
-      console.log(`${pair[0]}: ${pair[1]}`);
+    if (image) {
+      formData.append('image', image);
     }
 
+    // Append options as a JSON string
+    formData.append('options', JSON.stringify(options));
+
     try {
-      const response = await fetch('http://localhost:5000/api/products', {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('Authentication token missing. Please log in.');
+        navigate('/login');
+        return;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/products`, {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
         body: formData,
       });
 
       if (response.ok) {
-        alert('✅ Product created successfully!');
-        navigate('/admin-dashboard');
+        alert('Product created successfully!');
+        navigate('/admin/products'); // Redirect to product list or admin dashboard
       } else {
-        alert('❌ Error creating product');
+        const errorData = await response.json();
+        alert(`Failed to create product: ${errorData.message}`);
       }
     } catch (error) {
-      console.error('Error:', error);
-      alert('❌ Error creating product');
+      console.error('Error creating product:', error);
+      alert('An error occurred while creating the product.');
     }
   };
 
+  const inputClass =
+    "w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-700";
+  const labelClass = "block text-gray-700 text-sm font-bold mb-1";
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-6">
-      <div className="w-full max-w-lg bg-white rounded-2xl shadow-lg p-8">
-        <h2 className="text-3xl font-bold mb-8 text-center text-gray-800">Create New Product</h2>
+    <div className="min-h-screen bg-gray-100 p-6 flex items-center justify-center">
+      <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-2xl">
+        <h1 className="text-3xl font-bold text-center text-gray-800 mb-8">
+          Create New Product
+        </h1>
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Product Fields */}
+          {/* Product Basic Details */}
           <div>
-            <label className="block text-gray-700 mb-2">Name</label>
+            <label htmlFor="name" className={labelClass}>
+              Product Name
+            </label>
             <input
               type="text"
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-700"
+              id="name"
+              className={inputClass}
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
@@ -96,97 +115,104 @@ const CreateProduct = () => {
           </div>
 
           <div>
-            <label className="block text-gray-700 mb-2">Price (e.g. $5 - $100)</label>
+            <label htmlFor="price" className={labelClass}>
+              Base Price (DT)
+            </label>
             <input
-              type="text"
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-700"
+              type="number"
+              id="price"
+              className={inputClass}
               value={price}
               onChange={(e) => setPrice(e.target.value)}
+              step="0.01"
               required
             />
           </div>
 
           <div>
-            <label className="block text-gray-700 mb-2">Description</label>
+            <label htmlFor="description" className={labelClass}>
+              Description
+            </label>
             <textarea
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-700"
+              id="description"
+              className={inputClass}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              required
               rows={4}
+              required
             />
           </div>
 
           <div>
-            <label className="block text-gray-700 mb-2">Product Type</label>
+            <label htmlFor="image" className={labelClass}>
+              Product Image
+            </label>
+            <input
+              type="file"
+              id="image"
+              className="w-full text-gray-700 border border-gray-300 rounded-lg p-2 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+              onChange={(e) => setImage(e.target.files[0])}
+            />
+          </div>
+
+          <div>
+            <label htmlFor="type" className={labelClass}>
+              Product Type
+            </label>
             <select
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-700"
+              id="type"
+              className={inputClass}
               value={type}
               onChange={(e) => setType(e.target.value)}
-              required
             >
-              <option value="gift_cards">Gift Cards</option> {/* EXACT string */}
-              <option value="games">Games</option> {/* EXACT string */}
+              <option value="gift_cards">Gift Card</option>
+              <option value="games">Game</option>
+              <option value="software">Software</option>
+              {/* Add more types as needed */}
             </select>
           </div>
 
-          <div>
-            <label className="block text-gray-700 mb-2">Product Image</label>
-            <input
-              type="file"
-              accept="image/*"
-              className="w-full"
-              onChange={(e) => setImage(e.target.files[0])}
-              required
-            />
-          </div>
+          {/* Product Options Section */}
+          <div className="border-t pt-6 mt-6 border-gray-200">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">Product Options</h2>
+            {options.map((option, index) => (
+              <div
+                key={index}
+                className="flex items-center justify-between bg-gray-50 p-3 rounded-lg mb-3"
+              >
+                <div>
+                  <p className="font-semibold">{option.label}</p>
+                  <p className="text-sm text-gray-600">
+                    DT {parseFloat(option.price).toFixed(2)} - {option.description}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => removeOption(index)}
+                  className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-full text-sm"
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
 
-          {/* Options Section */}
-          <div className="mt-6 border-t pt-6">
-            <h3 className="text-xl font-semibold mb-4 text-gray-800">Product Options</h3>
-
-            {/* Existing Options List */}
-            {options.length > 0 && (
-              <ul className="mb-4 max-h-40 overflow-auto border rounded p-2">
-                {options.map((opt, idx) => (
-                  <li
-                    key={idx}
-                    className="flex justify-between items-center mb-2 border-b pb-1 last:border-b-0"
-                  >
-                    <div>
-                      <p><strong>Label:</strong> {opt.label}</p>
-                      <p><strong>Price:</strong> {opt.price}</p>
-                      <p><strong>Description:</strong> {opt.description}</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => removeOption(idx)}
-                      className="ml-4 text-red-500 hover:text-red-700 font-semibold"
-                    >
-                      Remove
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-
-            {/* Add New Option Inputs */}
-            <div className="space-y-3">
-              <div>
+            <div className="mt-4 p-4 border border-dashed border-gray-300 rounded-lg bg-gray-50">
+              <h3 className="text-xl font-semibold mb-3">Add New Option</h3>
+              <div className="mb-4">
                 <label className="block text-gray-700 mb-1">Option Label</label>
                 <input
                   type="text"
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-700"
+                  className={inputClass}
                   value={newOptionLabel}
                   onChange={(e) => setNewOptionLabel(e.target.value)}
                 />
               </div>
 
-              <div>
+              <div className="mb-4">
                 <label className="block text-gray-700 mb-1">Option Price</label>
                 <input
                   type="text"
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-700"
+                  className={inputClass}
                   value={newOptionPrice}
                   onChange={(e) => setNewOptionPrice(e.target.value)}
                 />
@@ -195,7 +221,7 @@ const CreateProduct = () => {
               <div>
                 <label className="block text-gray-700 mb-1">Option Description</label>
                 <textarea
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-700"
+                  className={inputClass}
                   value={newOptionDescription}
                   onChange={(e) => setNewOptionDescription(e.target.value)}
                   rows={2}

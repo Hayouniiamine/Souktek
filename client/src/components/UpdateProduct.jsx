@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_BASE_URL } from '../config';
 
 const UpdateProduct = () => {
   const [products, setProducts] = useState([]);
@@ -15,7 +16,7 @@ const UpdateProduct = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("http://localhost:5000/api/products");
+      const res = await fetch(`${API_BASE_URL}/api/products`);
       if (!res.ok) throw new Error("Failed to fetch products");
       const productsData = await res.json();
 
@@ -35,18 +36,18 @@ const UpdateProduct = () => {
         {loading && <p className="text-center text-gray-600">Loading...</p>}
         {error && <p className="text-center text-red-600">{error}</p>}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
           {products.map((product) => (
             <div
               key={product.id}
-              className="bg-white rounded-lg shadow p-4 flex flex-col"
+              className="bg-white rounded-2xl shadow-md overflow-hidden flex flex-col p-4"
             >
-              {/* Product Image */}
+              {/* Image with background */}
               <div className="flex justify-center bg-gray-200 p-4 rounded mb-4">
                 <img
                   src={
                     product.img
-                      ? `http://localhost:5000${
+                      ? `${API_BASE_URL}${
                           product.img.startsWith("/images")
                             ? product.img
                             : "/images/" + product.img

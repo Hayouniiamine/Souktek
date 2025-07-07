@@ -1,3 +1,6 @@
 // src/config.js
-const API_BASE_URL = "http://localhost:5000"; 
+
+// Use your deployed backend URL here
+const API_BASE_URL = "https://souktek-production.up.railway.app";
+
 export default API_BASE_URL;

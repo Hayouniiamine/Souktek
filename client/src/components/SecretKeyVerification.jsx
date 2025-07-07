@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_BASE_URL } from '../config';
 
 const SecretKeyVerification = () => {
   const navigate = useNavigate();
@@ -32,7 +33,7 @@ const SecretKeyVerification = () => {
     }
 
     try {
-      const response = await fetch("http://localhost:5000/api/admin/verify-secret", {
+      const response = await fetch(`${API_BASE_URL}/api/admin/verify-secret`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -49,8 +50,8 @@ const SecretKeyVerification = () => {
       } else {
         setError(data.message || "Secret key verification failed.");
       }
-    } catch (err) {
-      console.error("Network error during secret key verification:", err);
+    } catch (error) {
+      console.error("Secret key verification error:", error);
       setError("Network error. Could not connect to server.");
     }
   };
@@ -83,12 +84,12 @@ const SecretKeyVerification = () => {
           </div>
           <button
             type="submit"
-            className="w-full bg-blue-500 p-2 text-white rounded-md hover:bg-blue-600 transition duration-200"
+            className="w-full bg-blue-500 p-2 text-white rounded-md hover:bg-blue-600 transition duration-300"
           >
-            Verify Key
+            Verify
           </button>
+          {error && <p className="text-red-500 text-sm mt-3 text-center">{error}</p>}
         </form>
-        {error && <p className="text-red-500 text-sm mt-4">{error}</p>}
       </div>
     </div>
   );

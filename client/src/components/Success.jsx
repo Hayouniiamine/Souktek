@@ -49,7 +49,7 @@ const Success = () => {
 
         <button
           onClick={handleLoginRedirect}
-          className="w-full py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold text-xl transition duration-300 ease-in-out transform hover:scale-105 shadow-md"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition duration-300 transform hover:scale-105"
         >
           Go to Login
         </button>

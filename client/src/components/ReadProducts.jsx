@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../config';
 
 const ReadProducts = () => {
   const [products, setProducts] = useState([]);
@@ -8,7 +9,7 @@ const ReadProducts = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/products');
+        const response = await fetch(`${API_BASE_URL}/api/products`);
         const data = await response.json();
         setProducts(data);
 
@@ -42,7 +43,7 @@ const ReadProducts = () => {
             id="filter"
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            className="border border-gray-300 rounded-md px-3 py-1 bg-white text-black"
+            className="p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
             <option value="all">All</option>
             {types.map((type) => (
@@ -53,7 +54,8 @@ const ReadProducts = () => {
           </select>
         </div>
 
-        {filteredProducts.length > 0 ? (
+        {/* Product Grid */}
+        {products.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
             {filteredProducts.map((product) => (
               <div
@@ -64,7 +66,7 @@ const ReadProducts = () => {
                   <img
                     src={
                       product.img
-                        ? `http://localhost:5000${
+                        ? `${API_BASE_URL}${
                             product.img.startsWith('/images')
                               ? product.img
                               : '/images/' + product.img

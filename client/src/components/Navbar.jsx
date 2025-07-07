@@ -3,6 +3,7 @@ import { FaSearch, FaShoppingCart, FaUserCircle } from "react-icons/fa";
 import { FiChevronDown } from "react-icons/fi";
 import { Link, useNavigate } from "react-router-dom"; // Import useNavigate
 import { useCart } from "./context/CartContext";
+import { API_BASE_URL } from '../config';
 export default function Navbar() {
   const navigate = useNavigate(); // Initialize useNavigate
   const { getCartTotalItems } = useCart(); // Get getCartTotalItems from context
@@ -13,7 +14,7 @@ export default function Navbar() {
   // Fetch all products when the component mounts
   useEffect(() => {
     const fetchProducts = async () => {
-      const res = await fetch("http://localhost:5000/api/products");
+      const res = await fetch(`${API_BASE_URL}/api/products`);
       const data = await res.json();
       setAllProducts(data);
     };
@@ -50,26 +51,23 @@ export default function Navbar() {
           <input
             type="text"
             placeholder="Search products..."
-            className="w-full px-4 py-2 pl-10 rounded-md bg-[#1a1d23] text-sm text-white placeholder-gray-400 focus:outline-none"
+            className="w-full py-2 pl-10 pr-4 rounded-full bg-[#1c2027] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             value={searchQuery}
             onChange={handleSearchChange}
           />
-          <FaSearch className="absolute top-2.5 left-3 text-gray-400" />
+          <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
         </div>
-
-        {/* Display search results if any */}
-        {searchQuery && searchResults.length > 0 && (
-          <div className="absolute top-12 left-0 right-0 bg-[#1a1d23] p-4 rounded-md mt-1 z-10">
-            {" "}
-            {/* Added z-10 */}
-            <ul className="space-y-2">
+        {searchResults.length > 0 && searchQuery && (
+          <div className="absolute top-full left-0 right-0 mt-1 bg-[#1c2027] rounded-md shadow-lg max-h-60 overflow-y-auto z-10">
+            <ul className="py-1">
               {searchResults.map((product) => (
-                <li key={product.id} className="text-white text-sm">
-                  {" "}
-                  {/* Changed key to product.id */}
+                <li
+                  key={product.id}
+                  className="px-4 py-2 hover:bg-gray-700 cursor-pointer"
+                >
                   <Link
                     to={`/product/${product.name}`}
-                    className="hover:text-blue-500"
+                    className="block text-white"
                     onClick={() => setSearchResults([])}
                   >
                     {" "}
@@ -109,7 +107,7 @@ export default function Navbar() {
 
         {/* User icon, links to login page */}
         <Link to="/login">
-          <FaUserCircle className="text-2xl cursor-pointer" />
+          <FaUserCircle className="text-xl" />
         </Link>
       </div>
     </nav>

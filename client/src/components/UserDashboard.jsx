@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../config';
 
 const UserDashboard = () => {
   const [password, setPassword] = useState('');
@@ -26,7 +27,7 @@ const UserDashboard = () => {
   const fetchRecentOrders = async (userEmail) => {
     try {
       // Use the new API route to fetch orders by email
-      const response = await fetch(`http://localhost:5000/api/orders/email/${encodeURIComponent(userEmail)}`);
+      const response = await fetch(`${API_BASE_URL}/api/orders/email/${encodeURIComponent(userEmail)}`);
       const data = await response.json();
 
       if (response.ok) {
@@ -52,7 +53,7 @@ const UserDashboard = () => {
           return;
         }
 
-        const response = await fetch('http://localhost:5000/api/users/password', { // Corrected endpoint
+        const response = await fetch(`${API_BASE_URL}/api/users/password`, { // Corrected endpoint
           method: 'PUT', // Use PUT for updating password
           headers: {
             'Content-Type': 'application/json',
@@ -95,88 +96,75 @@ const UserDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#2c3e50] via-[#34495e] to-[#2c3e50] text-white p-6">
-      <h2 className="text-4xl font-bold text-center mb-10 drop-shadow-md">👤 Welcome, {user.email}</h2>
+      <h2 className="text-4xl font-bold text-center mb-10 drop-shadow-md">Welcome, {user.email}</h2>
 
-      <div className="grid md:grid-cols-2 gap-8">
-        {/* User Info & Logout */}
+      <div className="grid md:grid-cols-2 gap-12 max-w-6xl mx-auto">
+        {/* Profile Settings */}
         <div className="bg-[#1a1d23] p-6 rounded-xl shadow-lg">
-          <h3 className="text-2xl font-semibold mb-4">Account Info</h3>
-          <p className="mb-6 text-lg text-gray-300">Email: <span className="text-white font-medium">{user.email}</span></p>
-          <button
-            onClick={handleLogout}
-            className="w-full py-2 bg-red-500 hover:bg-red-600 rounded-md font-semibold"
-          >
-            🚪 Log Out
-          </button>
+          <h3 className="text-2xl font-semibold mb-6">Profile Settings</h3>
+          <form onSubmit={handleChangePassword} className="space-y-4">
+            <div>
+              <label className="block text-gray-300 text-sm font-semibold mb-2">
+                New Password
+              </label>
+              <input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="w-full px-3 py-2 rounded-md bg-[#2e353e] text-white focus:outline-none"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-gray-300 text-sm font-semibold mb-2">
+                Confirm New Password
+              </label>
+              <input
+                type="password"
+                value={confirmNewPassword}
+                onChange={(e) => setConfirmNewPassword(e.target.value)}
+                className="w-full px-3 py-2 rounded-md bg-[#2e353e] text-white focus:outline-none"
+                required
+              />
+            </div>
+            <button
+              type="submit"
+              className="w-full py-2 bg-blue-600 hover:bg-blue-700 rounded-md font-semibold"
+            >
+              Update Password
+            </button>
+          </form>
         </div>
 
-        {/* Change Password */}
-        <form
-          onSubmit={handleChangePassword}
-          className="bg-[#1a1d23] p-6 rounded-xl shadow-lg"
-        >
-          <h3 className="text-2xl font-semibold mb-6">🔐 Change Password</h3>
-          <div className="mb-4">
-            <label className="block mb-1 text-sm text-gray-400" htmlFor="password">Current Password</label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 rounded-md bg-[#2e353e] text-white focus:outline-none"
-              required
-            />
-          </div>
-          <div className="mb-4">
-            <label className="block mb-1 text-sm text-gray-400" htmlFor="newPassword">New Password</label>
-            <input
-              type="password"
-              id="newPassword"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              className="w-full px-4 py-2 rounded-md bg-[#2e353e] text-white focus:outline-none"
-              required
-            />
-          </div>
-          <div className="mb-6">
-            <label className="block mb-1 text-sm text-gray-400" htmlFor="confirmNewPassword">Confirm New Password</label>
-            <input
-              type="password"
-              id="confirmNewPassword"
-              value={confirmNewPassword}
-              onChange={(e) => setConfirmNewPassword(e.target.value)}
-              className="w-full px-4 py-2 rounded-md bg-[#2e353e] text-white focus:outline-none"
-              required
-            />
-          </div>
-          <button
-            type="submit"
-            className="w-full py-2 bg-blue-600 hover:bg-blue-700 rounded-md font-semibold"
-          >
-            Update Password
-          </button>
-        </form>
+        {/* Recent Orders */}
+        <div className="mt-12 bg-[#1a1d23] p-6 rounded-xl shadow-lg">
+          <h3 className="text-2xl font-semibold mb-6">Recent Orders</h3>
+          {recentOrders.length === 0 ? (
+            <p className="text-gray-400">No recent orders found.</p>
+          ) : (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {recentOrders.map((order) => (
+                <div
+                  key={order.id}
+                  className="bg-[#2e353e] p-4 rounded-lg shadow hover:shadow-md transition-shadow"
+                >
+                  <p className="text-md font-semibold mb-2">{order.product_name}</p> {/* Changed to product_name */}
+                  <p className="text-sm text-gray-400 mb-1">Date: {new Date(order.order_time).toLocaleDateString()}</p> {/* Changed to order_time */}
+                  <p className="text-sm text-gray-400">Amount: ${order.price.toFixed(2)}</p> {/* Changed to price */}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Recent Orders */}
-      <div className="mt-12 bg-[#1a1d23] p-6 rounded-xl shadow-lg">
-        <h3 className="text-2xl font-semibold mb-6">📦 Recent Orders</h3>
-        {recentOrders.length === 0 ? (
-          <p className="text-gray-400">No recent orders found.</p>
-        ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {recentOrders.map((order) => (
-              <div
-                key={order.id}
-                className="bg-[#2e353e] p-4 rounded-lg shadow hover:shadow-md transition-shadow"
-              >
-                <p className="text-md font-semibold mb-2">🛍️ {order.product_name}</p> {/* Changed to product_name */}
-                <p className="text-sm text-gray-400 mb-1">Date: {new Date(order.order_time).toLocaleDateString()}</p> {/* Changed to order_time */}
-                <p className="text-sm text-gray-400">Payment Method: <span className="text-white">{order.payment_method}</span></p> {/* Added payment_method */}
-              </div>
-            ))}
-          </div>
-        )}
+      <div className="mt-12 text-center">
+        <button
+          onClick={handleLogout}
+          className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-8 rounded-lg transition duration-300 transform hover:scale-105"
+        >
+          Logout
+        </button>
       </div>
     </div>
   );

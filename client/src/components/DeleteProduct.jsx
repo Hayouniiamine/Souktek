@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { API_BASE_URL } from '../config'; // Assuming config.js is in the parent directory
 
 const DeleteProduct = () => {
   const [products, setProducts] = useState([]);
@@ -8,7 +9,7 @@ const DeleteProduct = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/products");
+        const response = await fetch(`${API_BASE_URL}/api/products`);
         const data = await response.json();
         setProducts(data);
 
@@ -31,18 +32,20 @@ const DeleteProduct = () => {
   const handleDelete = async (id, name) => {
     if (window.confirm(`Are you sure you want to delete "${name}"?`)) {
       try {
-        const response = await fetch(`http://localhost:5000/api/products/${id}`, {
+        const response = await fetch(`${API_BASE_URL}/api/products/${id}`, {
           method: "DELETE",
         });
         if (response.ok) {
           alert("✅ Product deleted successfully!");
+          // Remove the deleted product from the state
           setProducts(products.filter((product) => product.id !== id));
         } else {
-          alert("❌ Error deleting product");
+          const errorData = await response.json();
+          alert(`❌ Error deleting product: ${errorData.message || response.statusText}`);
         }
       } catch (error) {
-        console.error("Error:", error);
-        alert("❌ Error deleting product");
+        console.error("Error deleting product:", error);
+        alert("❌ Network error or server is unreachable.");
       }
     }
   };
@@ -56,16 +59,12 @@ const DeleteProduct = () => {
 
         {/* Filter dropdown */}
         <div className="mb-6 flex justify-center">
-          <label htmlFor="filter" className="mr-3 font-semibold text-gray-700">
-            Filter by type:
-          </label>
           <select
-            id="filter"
-            value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            className="border border-gray-300 rounded-md px-3 py-1 bg-white text-black"
+            value={filterType}
+            className="p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value="all">All</option>
+            <option value="all">All Types</option>
             {types.map((type) => (
               <option key={type} value={type}>
                 {type}
@@ -74,7 +73,7 @@ const DeleteProduct = () => {
           </select>
         </div>
 
-        {filteredProducts.length > 0 ? (
+        {products.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
             {filteredProducts.map((product) => (
               <div
@@ -85,7 +84,7 @@ const DeleteProduct = () => {
                   <img
                     src={
                       product.img
-                        ? `http://localhost:5000${
+                        ? `${API_BASE_URL}${
                             product.img.startsWith("/images")
                               ? product.img
                               : "/images/" + product.img

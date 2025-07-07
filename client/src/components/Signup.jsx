@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaShoppingCart } from "react-icons/fa"; // Import the shopping cart icon for the logo
+import { API_BASE_URL } from '../config';
 
 const Signup = () => {
   const [email, setEmail] = useState('');
@@ -32,7 +33,7 @@ const Signup = () => {
 
     try {
       // Send POST request to signup endpoint
-      const response = await fetch("http://localhost:5000/api/signup", {
+      const response = await fetch(`${API_BASE_URL}/api/signup`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -67,26 +68,13 @@ const Signup = () => {
           <p className="text-sm text-gray-400 mt-2">
             Already have an account?{" "}
             <a href="/login" className="text-blue-500 hover:underline">
-              Log in
+              Login here
             </a>
-            .
           </p>
         </div>
 
-        {/* Signup Form */}
-        <form onSubmit={handleSubmit}>
-          <div className="mb-6">
-            <label className="block text-sm text-gray-300 mb-2">Username</label>
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Choose a username"
-              className="w-full px-4 py-3 rounded-md bg-[#2a2f36] text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div className="mb-6">
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="mb-4">
             <label className="block text-sm text-gray-300 mb-2">Email</label>
             <input
               type="email"
@@ -94,10 +82,23 @@ const Signup = () => {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email"
               className="w-full px-4 py-3 rounded-md bg-[#2a2f36] text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
             />
           </div>
 
-          <div className="mb-6">
+          <div className="mb-4">
+            <label className="block text-sm text-gray-300 mb-2">Username</label>
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Choose a username"
+              className="w-full px-4 py-3 rounded-md bg-[#2a2f36] text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+
+          <div className="mb-4">
             <label className="block text-sm text-gray-300 mb-2">Password</label>
             <input
               type="password"
@@ -131,10 +132,15 @@ const Signup = () => {
 
         <div className="mt-6 text-center">
           <p className="text-sm text-gray-400">
-            Already have an account?{" "}
-            <a href="/login" className="text-blue-500 hover:underline">
-              Log in
+            By signing up, you agree to our{" "}
+            <a href="#" className="text-blue-500 hover:underline">
+              Terms of Service
+            </a>{" "}
+            and{" "}
+            <a href="#" className="text-blue-500 hover:underline">
+              Privacy Policy
             </a>
+            .
           </p>
         </div>
       </div>

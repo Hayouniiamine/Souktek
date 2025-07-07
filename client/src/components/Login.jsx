@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaShoppingCart } from "react-icons/fa"; // Import the shopping cart icon for the logo
+import { API_BASE_URL } from '../config';
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -13,7 +14,7 @@ const Login = () => {
     setErrorMessage(""); // Clear previous errors
 
     try {
-      const response = await fetch("http://localhost:5000/api/login", {
+      const response = await fetch(`${API_BASE_URL}/api/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -54,19 +55,14 @@ const Login = () => {
         {/* Logo and Description */}
         <div className="text-center mb-8">
           <FaShoppingCart className="text-5xl text-blue-500 mb-3 mx-auto" />
-          <h2 className="text-4xl font-bold text-white">Welcome to DigiShop</h2>
+          <h2 className="text-4xl font-bold text-white">Welcome Back!</h2>
           <p className="text-sm text-gray-400 mt-2">
-            Log in to explore exclusive products and offers. New customers can{" "}
-            <a href="/signup" className="text-blue-500 hover:underline">
-              sign up
-            </a>{" "}
-            below.
+            Sign in to access your account and manage your orders.
           </p>
         </div>
 
-        {/* Login Form */}
-        <form onSubmit={handleLogin}>
-          <div className="mb-6">
+        <form onSubmit={handleLogin} className="space-y-5">
+          <div className="mb-4">
             <label className="block text-sm text-gray-300 mb-2">Email</label>
             <input
               type="email"
@@ -106,7 +102,7 @@ const Login = () => {
           <p className="text-sm text-gray-400">
             Don't have an account?{" "}
             <a href="/signup" className="text-blue-500 hover:underline">
-              Sign up
+              Sign Up
             </a>
           </p>
         </div>

@@ -33,7 +33,7 @@ export default function Bestsellers() {
                 <img
                   src={
                     product.img
-                      ? `http://localhost:5000${
+                      ? `${API_BASE_URL}${
                           product.img.startsWith("/images") ? product.img : "/images/" + product.img
                         }`
                       : "/images/default_image.png"
@@ -61,7 +61,7 @@ export default function Bestsellers() {
                 <img
                   src={
                     product.img
-                      ? `http://localhost:5000${
+                      ? `${API_BASE_URL}${
                           product.img.startsWith("/images") ? product.img : "/images/" + product.img
                         }`
                       : "/images/default_image.png"

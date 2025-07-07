@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { API_BASE_URL } from '../config';
 
 const EditProduct = () => {
   const { id } = useParams();
@@ -23,13 +24,13 @@ const EditProduct = () => {
     async function fetchData() {
       try {
         setLoading(true);
-        const productRes = await fetch(`http://localhost:5000/api/products/${id}`);
+        const productRes = await fetch(`${API_BASE_URL}/api/products/${id}`);
         if (!productRes.ok) throw new Error("Product not found");
         const productData = await productRes.json();
         setProduct(productData);
 
         const optionsRes = await fetch(
-          `http://localhost:5000/api/product_options/${id}`
+          `${API_BASE_URL}/api/product_options/${id}`
         );
         if (!optionsRes.ok) throw new Error("Failed to load options");
         const optionsData = await optionsRes.json();
@@ -47,24 +48,19 @@ const EditProduct = () => {
         setEditedOptions(initEditedOptions);
       } catch (err) {
         setError(err.message);
+        console.error("Error fetching product or options:", err);
       } finally {
         setLoading(false);
       }
     }
-
     fetchData();
   }, [id]);
 
-  const handleInputChange = (e) => {
+  const handleProductChange = (e) => {
     const { name, value } = e.target;
     setProduct((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleImageChange = (e) => {
-    setImage(e.target.files[0]);
-  };
-
-  // Handle option input changes locally
   const handleOptionChange = (optionId, field, value) => {
     setEditedOptions((prev) => ({
       ...prev,
@@ -75,160 +71,182 @@ const EditProduct = () => {
     }));
   };
 
-  // Unified submit handler: update product AND all options
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError(null);
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('Authentication token missing. Please log in.');
+      navigate('/login');
+      return;
+    }
+
+    // Prepare product data
+    const productFormData = new FormData();
+    productFormData.append("name", product.name);
+    productFormData.append("price", product.price);
+    productFormData.append("description", product.description);
+    if (image) {
+      productFormData.append("image", image);
+    }
 
     try {
-      // Update main product
-      const formData = new FormData();
-      formData.append("name", product.name);
-      formData.append("price", product.price); // string, accepts ranges or number
-      formData.append("description", product.description);
-      if (image) {
-        formData.append("image", image);
+      // Update product details
+      const productRes = await fetch(`${API_BASE_URL}/api/products/${id}`, {
+        method: "PUT",
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: productFormData, // FormData for multipart/form-data
+      });
+
+      if (!productRes.ok) {
+        const errorText = await productRes.text();
+        throw new Error(`Failed to update product: ${productRes.status} - ${errorText}`);
       }
 
-      const productRes = await fetch(`http://localhost:5000/api/products/${id}`, {
-        method: "PUT",
-        body: formData,
-      });
-      if (!productRes.ok) throw new Error("Failed to update product");
-
-      // Update all product options in parallel
-      const optionUpdatePromises = Object.entries(editedOptions).map(
-        async ([optionId, optionData]) => {
-          const body = {
-            label: optionData.label,
-            price: optionData.price, // keep as string, backend must handle parsing
-            description: optionData.description,
-          };
-          const res = await fetch(
-            `http://localhost:5000/api/product_options/${optionId}`,
-            {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(body),
-            }
-          );
-          if (!res.ok) throw new Error(`Failed to update option ${optionId}`);
-          return res.json();
-        }
+      // Update product options
+      // Send each option update individually or as a batch if API supports
+      await Promise.all(
+        Object.entries(editedOptions).map(([optionId, optionData]) =>
+          fetch(`${API_BASE_URL}/api/product_options/${optionId}`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify(optionData),
+          })
+            .then(res => {
+              if (!res.ok) {
+                return res.text().then(text => { throw new Error(`Failed to update option ${optionId}: ${res.status} - ${text}`); });
+              }
+              return res.json();
+            })
+        )
       );
 
-      await Promise.all(optionUpdatePromises);
-
-      alert("✅ Product and options updated successfully!");
-      navigate("/admin-dashboard");
+      alert("Product and options updated successfully!");
+      navigate("/admin/update-product"); // Navigate back to the update product list
     } catch (err) {
-      alert("❌ " + err.message);
+      setError(err.message);
+      console.error("Error updating product or options:", err);
     }
   };
 
-  if (loading) return <p className="text-center mt-8">Loading...</p>;
-  if (error) return <p className="text-center text-red-600 mt-8">{error}</p>;
-
-  // Shared style for placeholders in black
   const inputClass =
-    "w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-800 placeholder-black";
+    "w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500";
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        Loading product details...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100 text-red-600">
+        Error: {error}
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-6">
-      <div className="w-full max-w-3xl bg-white rounded-2xl shadow-lg p-8 overflow-auto max-h-[90vh]">
-        <h2 className="text-3xl font-bold mb-8 text-center text-gray-800">
-          Edit Product
-        </h2>
+    <div className="min-h-screen bg-gray-100 p-6 flex justify-center">
+      <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-3xl">
+        <h1 className="text-3xl font-bold text-center text-gray-800 mb-8">
+          Edit Product: {product.name}
+        </h1>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Product Name */}
-          <div>
-            <label className="block text-gray-700 mb-2">Product Name</label>
-            <input
-              type="text"
-              name="name"
-              className={inputClass}
-              value={product.name}
-              onChange={handleInputChange}
-              placeholder="Enter product name"
-              required
-            />
-          </div>
-
-          {/* Product Price (text input for ranges or numbers) */}
-          <div>
-            <label className="block text-gray-700 mb-2">
-              Price (e.g. DT14.46 - DT289.2 or 14.46)
-            </label>
-            <input
-              type="text"
-              name="price"
-              className={inputClass}
-              value={product.price}
-              onChange={handleInputChange}
-              placeholder="DT14.46 - DT289.2 or just number"
-              required
-            />
-          </div>
-
-          {/* Product Description */}
-          <div>
-            <label className="block text-gray-700 mb-2">Description</label>
-            <textarea
-              name="description"
-              className={`${inputClass} resize-none`}
-              value={product.description}
-              onChange={handleInputChange}
-              placeholder="Enter description"
-              rows={4}
-              required
-            />
-          </div>
-
-          {/* Image Preview */}
-          {product.img && (
+        <form onSubmit={handleSubmit}>
+          {/* Product Basic Details */}
+          <div className="mb-6">
+            <h2 className="text-2xl font-semibold text-gray-800 mb-4">Product Details</h2>
             <div className="mb-4">
-              <img
-                src={
-                  product.img.startsWith("/images")
-                    ? `http://localhost:5000${product.img}`
-                    : `http://localhost:5000/images/${product.img}`
-                }
-                alt={product.name}
-                className="max-h-32 object-contain"
+              <label htmlFor="name" className="block font-semibold text-gray-700 mb-1">
+                Product Name
+              </label>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                value={product.name}
+                onChange={handleProductChange}
+                className={inputClass}
               />
             </div>
-          )}
 
-          {/* Product Image Upload */}
-          <div>
-            <label className="block text-gray-700 mb-2">Product Image</label>
-            <input
-              type="file"
-              accept="image/*"
-              className="w-full"
-              onChange={handleImageChange}
-            />
+            <div className="mb-4">
+              <label htmlFor="price" className="block font-semibold text-gray-700 mb-1">
+                Base Price
+              </label>
+              <input
+                type="number"
+                id="price"
+                name="price"
+                value={product.price}
+                onChange={handleProductChange}
+                step="0.01"
+                className={inputClass}
+              />
+            </div>
+
+            <div className="mb-4">
+              <label htmlFor="description" className="block font-semibold text-gray-700 mb-1">
+                Description
+              </label>
+              <textarea
+                id="description"
+                name="description"
+                value={product.description}
+                onChange={handleProductChange}
+                rows={4}
+                className={`${inputClass} resize-none`}
+              />
+            </div>
+
+            <div className="mb-4">
+              <label htmlFor="image" className="block font-semibold text-gray-700 mb-1">
+                Product Image
+              </label>
+              <input
+                type="file"
+                id="image"
+                className="w-full text-gray-700 border border-gray-300 rounded-lg p-2 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                onChange={(e) => setImage(e.target.files[0])}
+              />
+              {product.img && (
+                <div className="mt-4">
+                  <p className="text-sm text-gray-600 mb-2">Current Image:</p>
+                  <img
+                    src={`${API_BASE_URL}${
+                      product.img.startsWith('/images') ? product.img : '/images/' + product.img
+                    }`}
+                    alt="Current Product"
+                    className="max-h-40 object-contain rounded-lg shadow"
+                  />
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Product Options Section */}
-          <div>
-            <h3 className="text-2xl font-semibold mb-6 text-gray-700">
-              Product Options
-            </h3>
-            {options.length === 0 && (
-              <p className="text-gray-500">No options available for this product.</p>
-            )}
+          <div className="mb-6 border-t pt-6 mt-6 border-gray-200">
+            <h2 className="text-2xl font-semibold text-gray-800 mb-4">Product Options</h2>
+            {options.length === 0 && <p className="text-gray-600">No options found for this product.</p>}
             {options.map((opt) => (
-              <div
-                key={opt.id}
-                className="border rounded-lg p-4 mb-6 bg-gray-50"
-                style={{ boxShadow: "0 0 6px #ccc" }}
-              >
+              <div key={opt.id} className="bg-gray-50 p-4 rounded-lg shadow-sm mb-4">
+                <h3 className="text-xl font-bold mb-3">Option: {opt.label}</h3>
                 <div className="mb-4">
-                  <label className="block font-semibold text-gray-700 mb-1">Label</label>
+                  <label className="block font-semibold text-gray-700 mb-1">
+                    Label
+                  </label>
                   <input
                     type="text"
-                    value={editedOptions[opt.id]?.label || ""}
+                    value={editedOptions[opt.id]?.label ?? ""}
                     onChange={(e) =>
                       handleOptionChange(opt.id, "label", e.target.value)
                     }
