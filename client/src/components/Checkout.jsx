@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Navbar from './Navbar';
 import Footer from './Footer';
 import { useCart } from "./context/CartContext";
-import { API_BASE_URL } from '../config';
+import  API_BASE_URL  from '../config';
 
 const Checkout = () => {
   const navigate = useNavigate();

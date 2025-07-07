@@ -4,7 +4,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import Footer from "./Footer";
 import { ShoppingCart } from "lucide-react";
 import { useCart } from "./context/CartContext";
-import { API_BASE_URL } from '../config';
+import API_BASE_URL  from '../config';
 export default function ProductPage() {
   const { name } = useParams();
   const navigate = useNavigate();

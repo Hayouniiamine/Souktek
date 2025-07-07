@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaShoppingCart } from "react-icons/fa"; // Import the shopping cart icon for the logo
-import { API_BASE_URL } from '../config';
+import API_BASE_URL from '../config';
 
 const Login = () => {
   const [email, setEmail] = useState("");

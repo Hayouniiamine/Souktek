@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { API_BASE_URL } from '../config'; // Assuming config.js is in the parent directory
+import  API_BASE_URL  from '../config'; // Assuming config.js is in the parent directory
 
 const DeleteProduct = () => {
   const [products, setProducts] = useState([]);

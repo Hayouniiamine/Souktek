@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom"; // Import useNavigate
-import { API_BASE_URL } from '../config';
+import API_BASE_URL  from '../config';
 
 const AdminDashboard = () => {
   const navigate = useNavigate(); // Initialize useNavigate hook

@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import Footer from './Footer';
 import Navbar from './Navbar';
 import { useCart } from "./context/CartContext";
-import { API_BASE_URL } from '../config';
+import API_BASE_URL  from '../config';
 
 const Basket = () => {
   const navigate = useNavigate();

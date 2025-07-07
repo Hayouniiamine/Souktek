@@ -3,7 +3,7 @@ import { FaSearch, FaShoppingCart, FaUserCircle } from "react-icons/fa";
 import { FiChevronDown } from "react-icons/fi";
 import { Link, useNavigate } from "react-router-dom"; // Import useNavigate
 import { useCart } from "./context/CartContext";
-import { API_BASE_URL } from '../config';
+import  API_BASE_URL  from '../config';
 export default function Navbar() {
   const navigate = useNavigate(); // Initialize useNavigate
   const { getCartTotalItems } = useCart(); // Get getCartTotalItems from context
