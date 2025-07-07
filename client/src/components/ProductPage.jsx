@@ -4,7 +4,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import Footer from "./Footer";
 import { ShoppingCart } from "lucide-react";
 import { useCart } from "./context/CartContext";
-import API_BASE_URL  from '../config';
+import API_BASE_URL from "../config";
 export default function ProductPage() {
   const { name } = useParams();
   const navigate = useNavigate();
@@ -28,7 +28,9 @@ export default function ProductPage() {
         const data = await res.json();
         setProduct(data);
 
-        const optionsRes = await fetch(`${API_BASE_URL}/api/product_options/${data.id}`);
+        const optionsRes = await fetch(
+          `${API_BASE_URL}/api/product_options/${data.id}`
+        );
         if (!optionsRes.ok) throw new Error("Options not found");
         const optionsData = await optionsRes.json();
         setOptions(optionsData);
@@ -40,7 +42,8 @@ export default function ProductPage() {
     };
 
     const fetchAll = async () => {
-      try { // Added try-catch for fetchAll as well
+      try {
+        // Added try-catch for fetchAll as well
         const res = await fetch(`${API_BASE_URL}/api/products`);
         if (!res.ok) throw new Error("Failed to fetch all products");
         const data = await res.json();
@@ -59,18 +62,24 @@ export default function ProductPage() {
 
   if (loading) return <div className="text-white p-4">Loading...</div>;
   if (error) return <div className="text-red-500 p-4">{error}</div>;
-  if (!product) return <div className="text-white p-4">Product data is not available.</div>;
+  if (!product)
+    return <div className="text-white p-4">Product data is not available.</div>;
 
   const imageUrl = product.img
     ? `${API_BASE_URL}${
-        product.img.startsWith("/images") ? product.img : "/images/" + product.img
+        product.img.startsWith("/images")
+          ? product.img
+          : "/images/" + product.img
       }`
     : "/images/default_image.png";
 
   return (
     <div className="bg-[#0e1117] min-h-screen text-white">
       {/* Hero */}
-      <div className="relative h-64 bg-cover bg-center" style={{ backgroundImage: `url(${imageUrl})` }}>
+      <div
+        className="relative h-64 bg-cover bg-center"
+        style={{ backgroundImage: `url(${imageUrl})` }}
+      >
         <div className="absolute inset-0 bg-black opacity-50"></div>
         <div className="relative z-10 flex flex-col items-center justify-center h-full text-center">
           <h1 className="text-5xl font-bold">{product.name}</h1>
@@ -80,20 +89,29 @@ export default function ProductPage() {
 
       <div className="max-w-4xl mx-auto p-4">
         <h2 className="text-2xl font-semibold mb-4">Available Options</h2>
-        {options.length === 0 && <p className="text-gray-400">No options available for this product.</p>}
+        {options.length === 0 && (
+          <p className="text-gray-400">
+            No options available for this product.
+          </p>
+        )}
         {options.map((option) => (
-          <div key={option.id} className="bg-[#1c222c] p-4 rounded-xl mb-4 flex justify-between items-center">
+          <div
+            key={option.id}
+            className="bg-[#1c222c] p-4 rounded-xl mb-4 flex justify-between items-center"
+          >
             <div>
               <h3 className="text-xl font-semibold">{option.label}</h3>
               <p className="text-gray-400">{option.description}</p>
             </div>
             <div className="flex items-center gap-4">
-              <div className="text-2xl font-bold">${Number(option.price).toFixed(2)}</div>
+              <div className="text-2xl font-bold">
+                ${Number(option.price).toFixed(2)}
+              </div>
               <button
                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded flex items-center gap-2"
                 onClick={() => {
                   addToCart(option, product); // Add to cart using context function
-                  navigate('/basket'); // Navigate to basket
+                  navigate("/basket"); // Navigate to basket
                 }}
               >
                 <ShoppingCart size={16} /> Buy Now
