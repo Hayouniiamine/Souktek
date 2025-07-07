@@ -96,9 +96,12 @@ export default function ProductPage() {
               <p className="text-gray-400">{option.description}</p>
             </div>
             <div className="flex items-center gap-4">
-              <div className="text-2xl font-bold">
-                ${!isNaN(parseFloat(option.price)) ? parseFloat(option.price).toFixed(2) : "0.00"}
-              </div>
+<div className="text-2xl font-bold">
+  {typeof option.price === "number" || !isNaN(Number(option.price))
+    ? `$${Number(option.price).toFixed(2)}`
+    : "$0.00"}
+</div>
+
               <button
                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded flex items-center gap-2"
                 onClick={() => {
