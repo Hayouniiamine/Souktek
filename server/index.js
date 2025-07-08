@@ -460,7 +460,7 @@ app.get("/api/orders/user/:email", verifyToken, async (req, res) => {
 // ✅ UPDATED: Order placement route with automatic user creation and product_id
 app.post("/api/orders", async (req, res) => {
   const {
-    product_id, // Added product_id as per old code's order post
+    product_id,
     product_name,
     payment_method,
     email,
@@ -468,8 +468,17 @@ app.post("/api/orders", async (req, res) => {
     transaction_number,
   } = req.body;
 
-  if (!product_id || !product_name || !email || !payment_method) {
-    return res.status(400).json({ message: "Missing required order information (product_id, product_name, email, payment_method are mandatory)" });
+  if (
+    !product_id ||
+    !product_name ||
+    !email ||
+    !payment_method ||
+    isNaN(Number(product_id))
+  ) {
+    return res.status(400).json({
+      message:
+        "Missing or invalid fields. Required: product_id (number), product_name, email, payment_method.",
+    });
   }
 
   const normalizedEmail = email.trim().toLowerCase();
@@ -477,6 +486,7 @@ app.post("/api/orders", async (req, res) => {
   let client;
 
   try {
+    console.log("Incoming order:", req.body);
     client = await pool.connect();
     await client.query("BEGIN");
 
@@ -489,25 +499,18 @@ app.post("/api/orders", async (req, res) => {
     );
 
     if (userCheckResult.rows.length === 0) {
-      console.log(`User with email ${normalizedEmail} not found. Creating new user...`);
-      // Note: Consider a more robust temporary password generation or email verification flow
-      // For now, using a placeholder for auto-created users
-      const randomPassword = Math.random().toString(36).slice(-10); // Generates a random 10-char string
+      const randomPassword = Math.random().toString(36).slice(-10);
       const hashedPassword = await bcrypt.hash(randomPassword, 10);
-
-      // Derive username from email or use a generic one
-      const username = normalizedEmail.split('@')[0] || "Customer";
+      const username = normalizedEmail.split("@")[0] || "Customer";
 
       const newUserResult = await client.query(
         "INSERT INTO users (username, email, password, phone) VALUES ($1, $2, $3, $4) RETURNING id",
-        [username, normalizedEmail, hashedPassword, phone || null] // Add phone for new user if available
+        [username, normalizedEmail, hashedPassword, phone || null]
       );
       userId = newUserResult.rows[0].id;
       userWasCreated = true;
-      console.log(`New user created with ID: ${userId}`);
     } else {
       userId = userCheckResult.rows[0].id;
-      console.log(`User with email ${normalizedEmail} found with ID: ${userId}.`);
     }
 
     const orderResult = await client.query(
@@ -516,20 +519,18 @@ app.post("/api/orders", async (req, res) => {
        RETURNING *`,
       [
         userId,
-        product_id,
+        Number(product_id),
         product_name,
         payment_method,
         normalizedEmail,
-        phone || null, // Ensure phone is null if not provided
-        transaction_number || null, // Ensure transaction_number is null if not provided
+        phone || null,
+        transaction_number || null,
       ]
     );
 
     await client.query("COMMIT");
     const placedOrder = orderResult.rows[0];
-    console.log(`Order placed successfully. Order ID: ${placedOrder.id}`);
 
-    // Send notification email to admin
     await sendOrderNotificationEmail({
       orderId: placedOrder.id,
       product_name: placedOrder.product_name,
@@ -538,27 +539,20 @@ app.post("/api/orders", async (req, res) => {
       phone: placedOrder.phone,
       transaction_number: placedOrder.transaction_number,
       order_time: placedOrder.order_time,
-      user_created: userWasCreated
+      user_created: userWasCreated,
     });
 
     res.status(201).json({
       message: "Order placed successfully",
       order: placedOrder,
-      user_created: userWasCreated // Inform client if new user was created
+      user_created: userWasCreated,
     });
-
   } catch (err) {
-    if (client) {
-      await client.query("ROLLBACK");
-      console.error("Transaction rolled back due to error.");
-    }
+    if (client) await client.query("ROLLBACK");
     console.error("Error processing order:", err.message || err);
     res.status(500).json({ message: "Error processing order. Please try again." });
   } finally {
-    if (client) {
-      client.release();
-      console.log("Database client released.");
-    }
+    if (client) client.release();
   }
 });
 
