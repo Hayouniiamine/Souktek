@@ -468,6 +468,8 @@ app.post("/api/orders", async (req, res) => {
     transaction_number,
   } = req.body;
 
+  console.log("Incoming order body:", req.body); // log raw incoming request
+
   if (
     !product_id ||
     !product_name ||
@@ -475,6 +477,13 @@ app.post("/api/orders", async (req, res) => {
     !payment_method ||
     isNaN(Number(product_id))
   ) {
+    console.warn("Validation failed with:", {
+      product_id,
+      product_name,
+      email,
+      payment_method,
+    });
+
     return res.status(400).json({
       message:
         "Missing or invalid fields. Required: product_id (number), product_name, email, payment_method.",
@@ -486,13 +495,13 @@ app.post("/api/orders", async (req, res) => {
   let client;
 
   try {
-    console.log("Incoming order:", req.body);
     client = await pool.connect();
     await client.query("BEGIN");
 
     let userId;
     let userWasCreated = false;
 
+    // 🧠 Check user
     const userCheckResult = await client.query(
       "SELECT id FROM users WHERE email = $1",
       [normalizedEmail]
@@ -507,16 +516,27 @@ app.post("/api/orders", async (req, res) => {
         "INSERT INTO users (username, email, password, phone) VALUES ($1, $2, $3, $4) RETURNING id",
         [username, normalizedEmail, hashedPassword, phone || null]
       );
+
       userId = newUserResult.rows[0].id;
       userWasCreated = true;
+      console.log("New user created with ID:", userId);
     } else {
       userId = userCheckResult.rows[0].id;
+      console.log("Existing user ID:", userId);
     }
 
+    // 🧠 Insert order
     const orderResult = await client.query(
-      `INSERT INTO orders (user_id, product_id, product_name, payment_method, email, phone, transaction_number, order_time)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
-       RETURNING *`,
+      `INSERT INTO orders (
+        user_id,
+        product_id,
+        product_name,
+        payment_method,
+        email,
+        phone,
+        transaction_number,
+        order_time
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW()) RETURNING *`,
       [
         userId,
         Number(product_id),
@@ -531,16 +551,9 @@ app.post("/api/orders", async (req, res) => {
     await client.query("COMMIT");
     const placedOrder = orderResult.rows[0];
 
-    await sendOrderNotificationEmail({
-      orderId: placedOrder.id,
-      product_name: placedOrder.product_name,
-      payment_method: placedOrder.payment_method,
-      email: placedOrder.email,
-      phone: placedOrder.phone,
-      transaction_number: placedOrder.transaction_number,
-      order_time: placedOrder.order_time,
-      user_created: userWasCreated,
-    });
+    console.log("✅ Order placed:", placedOrder);
+
+    // (Optional) send email here
 
     res.status(201).json({
       message: "Order placed successfully",
@@ -549,7 +562,7 @@ app.post("/api/orders", async (req, res) => {
     });
   } catch (err) {
     if (client) await client.query("ROLLBACK");
-    console.error("Error processing order:", err.message || err);
+    console.error("❌ Error processing order:", err.stack || err.message || err);
     res.status(500).json({ message: "Error processing order. Please try again." });
   } finally {
     if (client) client.release();
