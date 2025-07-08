@@ -73,7 +73,7 @@ const AdminDashboard = () => {
         setMostPopular(data.most_popular_product);
       } catch (error) {
         setErrorStats(error.message);
-        console.error("Error fetching product statistics:", error);
+        console.error("Error fetching product statisticss:", error);
       } finally {
         setLoadingStats(false);
       }
