@@ -28,7 +28,7 @@ export default function Footer() {
     "spotify.webp",
     "roblox.webp",
     "tinder.webp",
-    "watch_it.webp",
+    "watch_itt.webp",
     "osn.png",
   ];
 
@@ -37,9 +37,9 @@ export default function Footer() {
       <div className="max-w-screen-xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-10">
         {/* About Us */}
         <div>
-          <h2 className="text-xl font-semibold mb-4">About DigiShop</h2>
+          <h2 className="text-xl font-semibold mb-4">About Souktek</h2>
           <p className="text-gray-400 text-sm mb-4">
-            DigiShop is your trusted destination for purchasing digital gift
+            Souktek is your trusted destination for purchasing digital gift
             cards from top brands around the world. Safe, instant, and secure
             payment guaranteed.
           </p>
@@ -51,7 +51,7 @@ export default function Footer() {
                 rel="noopener noreferrer"
               >
                 <img
-                  src="/images/icons/instagram.png"
+                  src="/images/icons/instagramm.png"
                   alt="Instagram"
                   className="w-10 h-10"
                 />
@@ -176,7 +176,7 @@ export default function Footer() {
       </div>
 
       <div className="mt-12 text-center text-sm text-gray-600">
-        &copy; {new Date().getFullYear()} DigiShop. All rights reserved.
+        &copy; {new Date().getFullYear()} Souktek. All rights reserved.
       </div>
     </footer>
   );
