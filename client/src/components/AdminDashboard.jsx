@@ -1,14 +1,15 @@
+// src/AdminDashboard.jsx
+
 import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom"; // Import useNavigate
+import { Link, useNavigate } from "react-router-dom";
 import API_BASE_URL  from '../config';
 
 const AdminDashboard = () => {
-  const navigate = useNavigate(); // Initialize useNavigate hook
+  const navigate = useNavigate();
   const [allOrders, setAllOrders] = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
   const [errorOrders, setErrorOrders] = useState(null);
 
-  // State for product statistics
   const [totalProducts, setTotalProducts] = useState(0);
   const [averagePrice, setAveragePrice] = useState(0);
   const [mostExpensive, setMostExpensive] = useState({ name: 'N/A', price: 0 });
@@ -17,30 +18,26 @@ const AdminDashboard = () => {
   const [loadingStats, setLoadingStats] = useState(true);
   const [errorStats, setErrorStats] = useState(null);
 
-  // Combined useEffect for authentication/authorization and data fetching
   useEffect(() => {
     const userData = JSON.parse(localStorage.getItem('user'));
     const token = localStorage.getItem('token');
     const adminSecretVerified = localStorage.getItem('adminSecretVerified');
 
-    // 1. Check if user is logged in and is an admin
     if (!userData || !token || !userData.is_admin) {
       console.log("AdminDashboard: Not logged in as admin or token missing. Redirecting...");
       navigate('/login');
       return;
     }
 
-    // 2. Check if admin secret has been verified
     if (!adminSecretVerified) {
       console.log("AdminDashboard: Admin secret not verified. Redirecting to secret verification.");
       navigate('/secret-key-verification');
       return;
     }
 
-    // Fetch orders
     const fetchOrders = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/orders`, {
+        const response = await fetch(`${API_BASE_URL}/api/orders/all`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -58,7 +55,6 @@ const AdminDashboard = () => {
       }
     };
 
-    // Fetch product statistics
     const fetchProductStats = async () => {
       try {
         const response = await fetch(`${API_BASE_URL}/api/products/statistics`, {
@@ -90,7 +86,7 @@ const AdminDashboard = () => {
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    localStorage.removeItem('adminSecretVerified'); // Clear this flag on logout
+    localStorage.removeItem('adminSecretVerified');
     navigate('/login');
   };
 
