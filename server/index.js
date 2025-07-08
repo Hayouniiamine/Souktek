@@ -468,25 +468,9 @@ app.post("/api/orders", async (req, res) => {
     transaction_number,
   } = req.body;
 
-  console.log("Incoming order body:", req.body); // log raw incoming request
-
-  if (
-    !product_id ||
-    !product_name ||
-    !email ||
-    !payment_method ||
-    isNaN(Number(product_id))
-  ) {
-    console.warn("Validation failed with:", {
-      product_id,
-      product_name,
-      email,
-      payment_method,
-    });
-
+  if (!product_id || !product_name || !email || !payment_method) {
     return res.status(400).json({
-      message:
-        "Missing or invalid fields. Required: product_id (number), product_name, email, payment_method.",
+      message: "Missing required order information (product_id, product_name, email, payment_method are mandatory)",
     });
   }
 
@@ -501,45 +485,37 @@ app.post("/api/orders", async (req, res) => {
     let userId;
     let userWasCreated = false;
 
-    // 🧠 Check user
     const userCheckResult = await client.query(
       "SELECT id FROM users WHERE email = $1",
       [normalizedEmail]
     );
 
     if (userCheckResult.rows.length === 0) {
+      console.log(`User with email ${normalizedEmail} not found. Creating new user...`);
       const randomPassword = Math.random().toString(36).slice(-10);
       const hashedPassword = await bcrypt.hash(randomPassword, 10);
-      const username = normalizedEmail.split("@")[0] || "Customer";
+      const username = normalizedEmail.split('@')[0] || "Customer";
 
       const newUserResult = await client.query(
-        "INSERT INTO users (username, email, password, phone) VALUES ($1, $2, $3, $4) RETURNING id",
-        [username, normalizedEmail, hashedPassword, phone || null]
+        "INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING id",
+        [username, normalizedEmail, hashedPassword]
       );
 
       userId = newUserResult.rows[0].id;
       userWasCreated = true;
-      console.log("New user created with ID:", userId);
+      console.log(`New user created with ID: ${userId}`);
     } else {
       userId = userCheckResult.rows[0].id;
-      console.log("Existing user ID:", userId);
+      console.log(`User with email ${normalizedEmail} found with ID: ${userId}.`);
     }
 
-    // 🧠 Insert order
     const orderResult = await client.query(
-      `INSERT INTO orders (
-        user_id,
-        product_id,
-        product_name,
-        payment_method,
-        email,
-        phone,
-        transaction_number,
-        order_time
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW()) RETURNING *`,
+      `INSERT INTO orders (user_id, product_id, product_name, payment_method, email, phone, transaction_number, order_time)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+       RETURNING *`,
       [
         userId,
-        Number(product_id),
+        product_id,
         product_name,
         payment_method,
         normalizedEmail,
@@ -550,22 +526,37 @@ app.post("/api/orders", async (req, res) => {
 
     await client.query("COMMIT");
     const placedOrder = orderResult.rows[0];
+    console.log(`Order placed successfully. Order ID: ${placedOrder.id}`);
 
-    console.log("✅ Order placed:", placedOrder);
-
-    // (Optional) send email here
+    await sendOrderNotificationEmail({
+      orderId: placedOrder.id,
+      product_name: placedOrder.product_name,
+      payment_method: placedOrder.payment_method,
+      email: placedOrder.email,
+      phone: placedOrder.phone,
+      transaction_number: placedOrder.transaction_number,
+      order_time: placedOrder.order_time,
+      user_created: userWasCreated
+    });
 
     res.status(201).json({
       message: "Order placed successfully",
       order: placedOrder,
-      user_created: userWasCreated,
+      user_created: userWasCreated
     });
+
   } catch (err) {
-    if (client) await client.query("ROLLBACK");
-    console.error("❌ Error processing order:", err.stack || err.message || err);
+    if (client) {
+      await client.query("ROLLBACK");
+      console.error("Transaction rolled back due to error.");
+    }
+    console.error("Error processing order:", err.message || err);
     res.status(500).json({ message: "Error processing order. Please try again." });
   } finally {
-    if (client) client.release();
+    if (client) {
+      client.release();
+      console.log("Database client released.");
+    }
   }
 });
 
