@@ -49,11 +49,20 @@ const Checkout = () => {
 
     try {
       for (const item of cart) {
+        console.log("Placing order for:", {
+          product_id: item.productId,  // Correct product id here
+          product_name: item.name,
+          payment_method: selectedPaymentMethod,
+          email,
+          phone: whatsappPhone,
+          transaction_number: transactionNum,
+        });
+
         const res = await fetch(`${API_BASE_URL}/api/orders`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            product_id: Number(item.id), // Ensures it's a number
+            product_id: Number(item.productId),  // <-- FIXED here
             product_name: item.name,
             payment_method: selectedPaymentMethod,
             email,
