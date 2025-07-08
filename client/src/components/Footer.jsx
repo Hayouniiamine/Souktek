@@ -28,7 +28,6 @@ export default function Footer() {
     "spotify.webp",
     "roblox.webp",
     "tinder.webp",
-    "watch_itt.webp",
     "osn.png",
   ];
 
@@ -51,7 +50,7 @@ export default function Footer() {
                 rel="noopener noreferrer"
               >
                 <img
-                  src="/images/icons/instagramm.png"
+                  src="/images/instagramm.png"
                   alt="Instagram"
                   className="w-10 h-10"
                 />
