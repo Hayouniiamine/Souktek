@@ -43,19 +43,7 @@ export default function Footer() {
             payment guaranteed.
           </p>
           <ul className="flex gap-4 mt-4">
-            <li>
-              <a
-                href="https://www.instagram.com/souktek.tn?igsh=eXViNjMybXM4bDh3"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <img
-                  src="/images/icons/10900020.png"
-                  alt="Instagram"
-                  className="w-10 h-10"
-                />
-              </a>
-            </li>
+
             <li>
               <a
                 href="https://www.tiktok.com/@souktek.tn?_t=ZM-8xccULv4V5s&_r=1"
