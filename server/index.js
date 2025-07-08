@@ -561,79 +561,49 @@ app.post("/api/orders", async (req, res) => {
 });
 
 
-// ---------------------------\
-// STATISTICS ROUTES (ADMIN ONLY)
-// ---------------------------\
-
-app.get("/api/stats/total-products", authorizeAdmin, async (req, res) => {
+/// ---------------------------
+// COMBINED PRODUCT STATISTICS ROUTE (ADMIN ONLY)
+// ---------------------------
+app.get("/api/products/statistics", authorizeAdmin, async (req, res) => {
   try {
-    const result = await pool.query("SELECT COUNT(id) AS total_products FROM products");
-    res.json(result.rows[0]);
+    const [totalRes, avgRes, expensiveRes, lowStockRes, popularRes] = await Promise.all([
+      pool.query("SELECT COUNT(id) AS total_products FROM products"),
+      pool.query("SELECT AVG(price) AS average_price FROM products"),
+      pool.query("SELECT name, price FROM products ORDER BY price DESC LIMIT 1"),
+      pool.query("SELECT name, stock FROM products ORDER BY stock ASC LIMIT 1"),
+      pool.query(`
+        SELECT
+          product_name,
+          COUNT(product_id) AS total_sold_count
+        FROM
+          orders
+        GROUP BY
+          product_name
+        ORDER BY
+          total_sold_count DESC
+        LIMIT 1;
+      `),
+    ]);
+
+    res.json({
+      total_products: totalRes.rows[0].total_products,
+      average_price: avgRes.rows[0].average_price,
+      most_expensive_product: expensiveRes.rows[0] || { name: 'N/A', price: 0 },
+      lowest_stock_product: lowStockRes.rows[0] || { name: 'N/A', stock: 0 },
+      most_popular_product: popularRes.rows.length > 0
+        ? {
+            name: popularRes.rows[0].product_name,
+            sold: popularRes.rows[0].total_sold_count
+          }
+        : { name: 'N/A', sold: 0 }
+    });
+
   } catch (err) {
-    console.error("Error fetching total products:", err);
-    res.status(500).json({ message: "Error fetching total products" });
+    console.error("❌ Error fetching statistics:", err);
+    res.status(500).json({ message: "Failed to fetch product statistics" });
   }
 });
 
-app.get("/api/stats/average-price", authorizeAdmin, async (req, res) => {
-  try {
-    const result = await pool.query("SELECT AVG(price) AS average_price FROM products");
-    res.json(result.rows[0]);
-  } catch (err) {
-    console.error("Error fetching average price:", err);
-    res.status(500).json({ message: "Error fetching average price" });
-  }
-});
-
-app.get("/api/stats/most-expensive", authorizeAdmin, async (req, res) => {
-  try {
-    const result = await pool.query("SELECT name, price FROM products ORDER BY price DESC LIMIT 1");
-    if (result.rows.length === 0) {
-      return res.status(404).json({ message: "No products found." });
-    }
-    res.json(result.rows[0]);
-  } catch (err) {
-    console.error("Error fetching most expensive product:", err);
-    res.status(500).json({ message: "Error fetching most expensive product" });
-  }
-});
-
-app.get("/api/stats/lowest-stock", authorizeAdmin, async (req, res) => {
-  try {
-    const result = await pool.query("SELECT name, stock FROM products ORDER BY stock ASC LIMIT 1");
-    if (result.rows.length === 0) {
-      return res.status(404).json({ message: "No products found or no stock data." });
-    }
-    res.json(result.rows[0]);
-  } catch (err) {
-    console.error("Error fetching lowest stock product:", err);
-    res.status(500).json({ message: "Error fetching lowest stock product" });
-  }
-});
-
-app.get("/api/stats/most-popular", authorizeAdmin, async (req, res) => {
-  try {
-    const result = await pool.query(`
-      SELECT
-        product_name,
-        COUNT(product_id) AS total_sold_count
-      FROM
-        orders
-      GROUP BY
-        product_name
-      ORDER BY
-        total_sold_count DESC
-      LIMIT 1;
-    `);
-    if (result.rows.length === 0) {
-      return res.status(404).json({ message: "No orders found to determine popularity." });
-    }
-    res.json(result.rows[0]);
-  } catch (err) {
-    console.error("Error fetching most popular product:", err);
-    res.status(500).json({ message: "Error fetching most popular product" });
-  }
-});
 
 
 // ---------------------------\
