@@ -50,7 +50,7 @@ export default function Footer() {
                 rel="noopener noreferrer"
               >
                 <img
-                  src="/images/instagramm.png"
+                  src="/images/icons/10900020.png"
                   alt="Instagram"
                   className="w-10 h-10"
                 />
