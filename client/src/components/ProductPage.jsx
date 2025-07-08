@@ -18,7 +18,7 @@ export default function ProductPage() {
 
   useEffect(() => {
     if (!name) {
-      setError("Product name is missings");
+      setError("Product name is missing");
       return;
     }
 
