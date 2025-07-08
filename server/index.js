@@ -7,9 +7,7 @@ const multer = require("multer");
 const nodemailer = require("nodemailer");
 const jwt = require("jsonwebtoken");
 
-// If you use a .env file for local development, uncomment the line below.
-// For Railway, you will set these variables directly in the dashboard.
-// require('dotenv').config();
+
 
 const app = express();
 
