@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaShoppingCart } from "react-icons/fa"; // Import the shopping cart icon for the logo
-import API_BASE_URL from '../config';
+import API_BASE_URL from "../config";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -14,7 +14,7 @@ const Login = () => {
     setErrorMessage(""); // Clear previous errors
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/login`, {
+      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -31,13 +31,12 @@ const Login = () => {
         localStorage.setItem("token", data.token);
         localStorage.setItem("user", JSON.stringify(data.user));
 
-        // Redirect to the correct page based on user role
+        // Redirect based on role
         if (data.user.is_admin) {
-          // Clear any previous adminSecretVerified flag to ensure re-verification
-          localStorage.removeItem("adminSecretVerified"); // <--- ADDED THIS LINE
-          navigate("/secret-key-verification");  // Redirect to secret key verification for admin
+          localStorage.removeItem("adminSecretVerified");
+          navigate("/secret-key-verification");
         } else {
-          navigate("/user-dashboard");  // Redirect to user dashboard for regular users
+          navigate("/user-dashboard");
         }
       } else {
         console.log("Login failed:", data);
