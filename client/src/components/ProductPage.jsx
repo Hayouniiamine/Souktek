@@ -1,15 +1,16 @@
-
+// src/ProductPage.jsx
 import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import Footer from "./Footer";
 import { ShoppingCart } from "lucide-react";
 import { useCart } from "./context/CartContext";
-import API_BASE_URL from "../config"; // Ensure this path is correct based on your project structure
+import API_BASE_URL from "../config"; // Ensure this is correctly configured for your deployed backend
 
 export default function ProductPage() {
   const { name } = useParams();
   const navigate = useNavigate();
   const { addToCart } = useCart(); // Use the addToCart function from context
+
   const [product, setProduct] = useState(null);
   const [options, setOptions] = useState([]);
   const [allProducts, setAllProducts] = useState([]);
@@ -24,34 +25,25 @@ export default function ProductPage() {
 
     const fetchProduct = async () => {
       try {
-        console.log("Fetching product by name:", name); // Added log
+        console.log(`Fetching product from: ${API_BASE_URL}/api/products/name/${name}`);
         const res = await fetch(`${API_BASE_URL}/api/products/name/${name}`);
-        console.log("Fetched product data response status:", res.status); // Added log
         if (!res.ok) {
-          const errorText = await res.text(); // Get more details on error
-          throw new Error(`Product not found: ${res.status} ${errorText}`);
+          throw new Error(`Product not found: ${res.status} ${res.statusText}`);
         }
         const data = await res.json();
-        console.log("Fetched product data:", data); // Added log
+        console.log("Fetched product data:", data);
         setProduct(data);
 
-        console.log("Attempting to fetch options for product ID:", data.id); // Added log
+        console.log(`Fetching options from: ${API_BASE_URL}/api/product_options/${data.id}`);
         const optionsRes = await fetch(`${API_BASE_URL}/api/product_options/${data.id}`);
-        console.log("Options fetch response status:", optionsRes.status); // Added log
         if (!optionsRes.ok) {
-          if (optionsRes.status === 404) {
-            console.warn("No options found for this product, setting options to empty array."); // Changed to warn
-            setOptions([]); // Set empty array if 404
-            return;
-          }
-          const optionsErrorText = await optionsRes.text();
-          throw new Error(`Options not found: ${optionsRes.status} ${optionsErrorText}`);
+          throw new Error(`Options not found: ${optionsRes.status} ${optionsRes.statusText}`);
         }
         const optionsData = await optionsRes.json();
-        console.log("Fetched options data:", optionsData); // Added log
+        console.log("Fetched options data:", optionsData);
         setOptions(optionsData);
       } catch (err) {
-        console.error("Error in fetchProduct:", err); // Added error log
+        console.error("Error fetching product or options:", err);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -60,14 +52,16 @@ export default function ProductPage() {
 
     const fetchAll = async () => {
       try {
-        console.log("Fetching all products for 'More like this' section."); // Added log
+        console.log(`Fetching all products from: ${API_BASE_URL}/api/products`);
         const res = await fetch(`${API_BASE_URL}/api/products`);
-        if (!res.ok) throw new Error("Failed to fetch all products");
+        if (!res.ok) {
+          throw new Error(`Failed to fetch all products: ${res.status} ${res.statusText}`);
+        }
         const data = await res.json();
-        console.log("Fetched all products data:", data); // Added log
+        console.log("Fetched all products data:", data);
         setAllProducts(data);
       } catch (err) {
-        console.error("Error fetching all products for 'More like this':", err); // Added console.error
+        console.error("Error fetching all products:", err);
         // Not setting error state for all products as it's not critical for main product display
       }
     };
@@ -82,77 +76,50 @@ export default function ProductPage() {
   if (error) return <div className="text-red-500 p-4">{error}</div>;
   if (!product) return <div className="text-white p-4">Product data is not available.</div>;
 
+  // Use API_BASE_URL for images as well
   const imageUrl = product.img
     ? `${API_BASE_URL}${
         product.img.startsWith("/images") ? product.img : "/images/" + product.img
       }`
-    : "/images/default_image.png";
+    : "/images/default_image.png"; // Fallback for local development or if API_BASE_URL is not set
 
   return (
     <div className="bg-[#0e1117] min-h-screen text-white">
       {/* Hero */}
-      <div className="bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500 p-8 flex flex-col md:flex-row gap-6 items-center justify-center">
-        <img src={imageUrl} alt={product.name} className="max-h-32 object-contain" />
-        <div className="text-center md:text-left max-w-xl">
-          <h1 className="text-3xl font-bold mb-2">{product.name}</h1>
-          <p className="text-white text-sm mb-1">{product.description}</p>
-          <p className="text-white text-xs">Instant Wallet Recharge · Redeemable Globally</p>
+      <div className="relative h-64 bg-cover bg-center" style={{ backgroundImage: `url(${imageUrl})` }}>
+        <div className="absolute inset-0 bg-black opacity-50"></div>
+        <div className="relative z-10 flex flex-col items-center justify-center h-full text-center">
+          <h1 className="text-5xl font-bold">{product.name}</h1>
+          <p className="text-lg mt-2">{product.description}</p>
         </div>
       </div>
 
-      {/* Price Options */}
-      <div className="max-w-3xl mx-auto p-4">
-        {options.length === 0 && (
-          <p className="text-gray-400">No pricing options available.</p>
-        )}
+      <div className="max-w-4xl mx-auto p-4">
+        <h2 className="text-2xl font-semibold mb-4">Available Options</h2>
+        {options.length === 0 && <p className="text-gray-400">No options available for this product.</p>}
         {options.map((option) => (
-          <div
-            key={option.id}
-            className="bg-[#1c222c] mb-3 p-4 rounded-xl flex justify-between items-center hover:shadow-lg"
-          >
-            <div className="flex items-center gap-4">
-              <img
-                src={imageUrl}
-                alt={product.name}
-                className="w-12 h-12 rounded-md"
-              />
-              <div>
-                <div className="text-sm font-semibold">
-                  {product.name} - DT
-                  {(() => {
-                    console.log("Processing option:", option); // Log the entire option object
-                    console.log("Type of option.price:", typeof option.price, "Value:", option.price); // Log price type and value
-
-                    const parsed = parseFloat(option.price);
-                    if (isNaN(parsed)) {
-                      console.warn("WARN: Price is not a number or string type that can be parsed in option:", option); // More specific warning
-                      return "N/A"; // Or handle as an error
-                    }
-                    console.log("Parsed option price (should be number):", parsed); // Log parsed value
-                    return parsed.toFixed(2);
-                  })()}
-                  ({option.label})
-                </div>
-                <div className="text-xs text-gray-400">{option.description}</div>
-              </div>
+          <div key={option.id} className="bg-[#1c222c] p-4 rounded-xl mb-4 flex justify-between items-center">
+            <div>
+              <h3 className="text-xl font-semibold">{option.label}</h3>
+              <p className="text-gray-400">{option.description}</p>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="text-white font-bold">
-                DT
+            <div className="flex items-center gap-4">
+              <div className="text-2xl font-bold">
                 {(() => {
+                  console.log("Processing option:", option);
                   const parsed = parseFloat(option.price);
                   if (isNaN(parsed)) {
-                    console.warn("WARN: Price is not a number or string type that can be parsed for display:", option); // Another warning for display
-                    return "N/A";
+                    console.warn("WARN: option.price is not a valid number:", option.price, typeof option.price, option);
+                    return "Price N/A"; // Or handle as an error
                   }
-                  return parsed.toFixed(2);
+                  return `$${parsed.toFixed(2)}`;
                 })()}
               </div>
               <button
                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded flex items-center gap-2"
                 onClick={() => {
                   addToCart(option, product); // Add to cart using context function
-                  navigate("/basket"); // Navigate to basket
+                  navigate('/basket'); // Navigate to basket
                 }}
               >
                 <ShoppingCart size={16} /> Buy Now
@@ -180,17 +147,19 @@ export default function ProductPage() {
                   alt={p.name}
                   className="w-full h-40 object-contain rounded-md mb-2"
                 />
-                <h3 className="text-white font-medium">{p.name}</h3>
-                <p className="text-gray-400 text-sm">
+                <h3 className="text-lg font-semibold">{p.name}</h3>
+                <p className="text-gray-400 text-sm">{p.description}</p>
+                <div className="text-xl font-bold mt-2">
                   {(() => {
+                    console.log("Processing 'more like this' product:", p);
                     const parsed = parseFloat(p.price);
                     if (isNaN(parsed)) {
-                      console.warn("WARN: Invalid price for product in 'More like this':", p); // Added warning
+                      console.warn("WARN: p.price is not a valid number in 'More like this':", p.price, typeof p.price, p);
                       return "Price N/A";
                     }
                     return `$${parsed.toFixed(2)}`;
                   })()}
-                </p>
+                </div>
               </Link>
             ))}
           </div>
