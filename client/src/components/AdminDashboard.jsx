@@ -19,69 +19,76 @@ const AdminDashboard = () => {
   const [errorStats, setErrorStats] = useState(null);
 
   useEffect(() => {
-    const userData = JSON.parse(localStorage.getItem('user'));
-    const token = localStorage.getItem('token');
-    const adminSecretVerified = localStorage.getItem('adminSecretVerified');
+  const userData = JSON.parse(localStorage.getItem('user'));
+  const token = localStorage.getItem('token');
+  const adminSecretVerified = localStorage.getItem('adminSecretVerified');
 
-    if (!userData || !token || !userData.is_admin) {
-      console.log("AdminDashboard: Not logged in as admin or token missing. Redirecting...");
-      navigate('/login');
-      return;
-    }
+  if (!userData || !token || !userData.is_admin) {
+    console.log("AdminDashboard: Not logged in as admin or token missing. Redirecting...");
+    navigate('/login');
+    return;
+  }
 
-    if (!adminSecretVerified) {
-      console.log("AdminDashboard: Admin secret not verified. Redirecting to secret verification.");
-      navigate('/secret-key-verification');
-      return;
-    }
+  if (!adminSecretVerified) {
+    console.log("AdminDashboard: Admin secret not verified. Redirecting to secret verification.");
+    navigate('/secret-key-verification');
+    return;
+  }
 
-    const fetchOrders = async () => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/orders/all`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+  const fetchOrdersAndStats = async () => {
+    try {
+      // Fetch all products
+      const productRes = await fetch(`${API_BASE_URL}/api/products`);
+      const products = await productRes.json();
+
+      setTotalProducts(products.length);
+
+      const prices = products.map(p => parseFloat(p.price)).filter(p => !isNaN(p));
+      const avg = prices.reduce((sum, p) => sum + p, 0) / prices.length;
+      setAveragePrice(avg || 0);
+
+      const mostExp = products.reduce((prev, curr) => parseFloat(curr.price) > parseFloat(prev.price) ? curr : prev, products[0]);
+      setMostExpensive(mostExp || { name: 'N/A', price: 0 });
+
+      const withStock = products.filter(p => p.stock !== undefined && p.stock !== null);
+      const lowestStockProduct = withStock.reduce((prev, curr) => (curr.stock < prev.stock ? curr : prev), withStock[0]);
+      setLowestStock(lowestStockProduct || { name: 'N/A', stock: 0 });
+
+      // Fetch orders
+      const ordersRes = await fetch(`${API_BASE_URL}/api/orders/all`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!ordersRes.ok) throw new Error(`Orders fetch failed: ${ordersRes.status}`);
+      const orders = await ordersRes.json();
+      setAllOrders(orders);
+
+      const productCountMap = {};
+      orders.forEach(order => {
+        const name = order.product_name;
+        productCountMap[name] = (productCountMap[name] || 0) + 1;
+      });
+
+      let mostPopularName = 'N/A';
+      let maxCount = 0;
+      for (const [name, count] of Object.entries(productCountMap)) {
+        if (count > maxCount) {
+          mostPopularName = name;
+          maxCount = count;
         }
-        const data = await response.json();
-        setAllOrders(data);
-      } catch (error) {
-        setErrorOrders(error.message);
-        console.error("Error fetching orders:", error);
-      } finally {
-        setLoadingOrders(false);
       }
-    };
+      setMostPopular({ name: mostPopularName, sold: maxCount });
 
-    const fetchProductStats = async () => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/products/statistics`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        setTotalProducts(data.total_products);
-        setAveragePrice(data.average_price);
-        setMostExpensive(data.most_expensive_product);
-        setLowestStock(data.lowest_stock_product);
-        setMostPopular(data.most_popular_product);
-      } catch (error) {
-        setErrorStats(error.message);
-        console.error("Error fetching product statisticss:", error);
-      } finally {
-        setLoadingStats(false);
-      }
-    };
+    } catch (err) {
+      setErrorStats(err.message);
+      console.error("Error loading dashboard data:", err);
+    } finally {
+      setLoadingStats(false);
+      setLoadingOrders(false);
+    }
+  };
 
-    fetchOrders();
-    fetchProductStats();
-  }, [navigate]);
+  fetchOrdersAndStats();
+}, [navigate]);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
