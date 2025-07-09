@@ -24,6 +24,7 @@ const Checkout = () => {
   const [whatsappPhone, setWhatsappPhone] = useState("");
   const [transactionNum, setTransactionNum] = useState("");
   const [showPaymentUI, setShowPaymentUI] = useState(false);
+  const [emailError, setEmailError] = useState("");
 
   const subtotal = getCartTotalPrice();
   const serviceFee = 0;
@@ -33,54 +34,62 @@ const Checkout = () => {
     if (cart.length === 0) navigate("/basket");
   }, [cart, navigate]);
 
+  // Simple email validation regex
+  const validateEmail = (email) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+
   const handlePaymentSelect = (id) => {
     setSelectedPaymentMethod(id);
     setShowPaymentUI(true);
     setEmail("");
     setWhatsappPhone("");
     setTransactionNum("");
+    setEmailError("");
   };
 
   const handlePlaceOrder = async () => {
     if (!selectedPaymentMethod || !email || !whatsappPhone || !transactionNum) {
-      console.log("Please complete all required fields.");
+      console.log("Veuillez remplir tous les champs requis.");
+      return;
+    }
+
+    if (!validateEmail(email)) {
+      setEmailError("Veuillez entrer une adresse e-mail valide.");
       return;
     }
 
     try {
-      for (const item of cart) {
-        console.log("Placing order for:", {
-          product_id: item.productId,  // Correct product id here
-          product_name: item.name,
+      // Prepare the array of products
+      const productsPayload = cart.map(item => ({
+        product_id: Number(item.productId),
+        product_name: item.name,
+        quantity: item.quantity ?? 1, // include quantity if you want
+      }));
+
+      const res = await fetch(`${API_BASE_URL}/api/orders`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          products: productsPayload,
           payment_method: selectedPaymentMethod,
           email,
           phone: whatsappPhone,
           transaction_number: transactionNum,
-        });
+        }),
+      });
 
-        const res = await fetch(`${API_BASE_URL}/api/orders`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            product_id: Number(item.productId),  // <-- FIXED here
-            product_name: item.name,
-            payment_method: selectedPaymentMethod,
-            email,
-            phone: whatsappPhone,
-            transaction_number: transactionNum,
-          }),
-        });
-
-        if (!res.ok) {
-          throw new Error(`Failed for ${item.name}`);
-        }
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.message || "Erreur lors de la commande");
       }
 
-      console.log("Order placed successfully!");
+      console.log("Commande passée avec succès !");
       navigate("/success");
+
     } catch (err) {
-      console.error("Order error:", err);
-      console.log("Error placing order. Please try again.");
+      console.error("Erreur de commande:", err);
+      console.log("Erreur lors de la commande. Veuillez réessayer.");
     }
   };
 
@@ -94,11 +103,11 @@ const Checkout = () => {
             className="text-blue-500 text-base font-medium mb-2 self-start"
             onClick={() => navigate("/basket")}
           >
-            &#x2190; Back to Basket
+            &#x2190; Retour au panier
           </button>
 
           <h2 className="text-2xl font-semibold mb-5 text-white">
-            Select Payment Method
+            Sélectionnez la méthode de paiement
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -130,27 +139,27 @@ const Checkout = () => {
             Instructions de Paiement
           </h2>
           <ul className="list-decimal list-inside space-y-2 text-base text-gray-300">
-            <li>Pay via D17 @ 20 123 567 or Flouci @ 20 123 567.</li>
-            <li>Copy the authorisation number.</li>
-            <li>Paste it into the field below.</li>
+            <li>Payer via D17 @ 20 123 567 ou Flouci @ 20 123 567.</li>
+            <li>Copiez le numéro d’autorisation.</li>
+            <li>Collez-le dans le champ ci-dessous.</li>
             <li>
-              For recharge cards, join them with <code>+</code>:<br />
+              Pour les cartes recharge, joignez-les avec <code>+</code>:<br />
               <span className="font-mono text-sm text-gray-400">
-                1st card + 2nd card + 3rd card …
+                1ère carte + 2ème carte + 3ème carte …
               </span>
             </li>
-            <li>Enter your email and phone, then click “Place order”.</li>
-            <li>Our team will contact you within 10 minutes.</li>
+            <li>Entrez votre e-mail et téléphone, puis cliquez sur “Passer la commande”.</li>
+            <li>Notre équipe vous contactera dans les 10 minutes.</li>
           </ul>
         </div>
 
         <div className="flex flex-col gap-4 lg:w-1/3 bg-[#22252a] rounded-lg p-5 shadow-md">
-          <h3 className="font-semibold text-lg mb-2">Order Summary</h3>
+          <h3 className="font-semibold text-lg mb-2 text-white">Récapitulatif de la commande</h3>
 
           {cart.map((it) => (
             <div
               key={it.cartItemId ?? it.id}
-              className="flex justify-between text-sm border-b border-[#333] pb-2 mb-2"
+              className="flex justify-between text-sm border-b border-[#333] pb-2 mb-2 text-white"
             >
               <span>{it.name} × {it.quantity}</span>
               <span>TND{(it.price * it.quantity).toFixed(2)}</span>
@@ -158,46 +167,52 @@ const Checkout = () => {
           ))}
 
           <div className="flex justify-between text-sm text-gray-400">
-            <span>Subtotal</span>
+            <span>Sous-total</span>
             <span className="font-semibold text-base">TND{subtotal.toFixed(2)}</span>
           </div>
 
           <div className="flex justify-between text-sm text-gray-400 border-b border-[#333] pb-2">
-            <span>Service Fee</span>
+            <span>Frais de service</span>
             <span className="font-semibold text-base">TND{serviceFee.toFixed(2)}</span>
           </div>
 
-          <div className="flex justify-between font-bold text-lg pt-2">
+          <div className="flex justify-between font-bold text-lg pt-2 text-white">
             <span>Total</span>
             <span>TND{total.toFixed(2)}</span>
           </div>
 
           {showPaymentUI && (
             <div className="mt-6 border-t border-[#333] pt-4">
-              <h4 className="text-lg font-semibold mb-4">Payment Details</h4>
+              <h4 className="text-lg font-semibold mb-4 text-white">Détails du paiement</h4>
 
-              <label className="block text-sm mb-1">Email</label>
+              <label className="block text-sm mb-1 text-white">Email</label>
               <input
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full mb-3 p-2 rounded-md bg-[#1a1d22] border border-[#333] text-sm"
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (emailError) setEmailError("");
+                }}
+                className="w-full mb-3 p-2 rounded-md bg-[#1a1d22] border border-[#333] text-sm text-white"
                 required
               />
+              {emailError && (
+                <p className="text-red-500 text-sm mb-2">{emailError}</p>
+              )}
 
-              <label className="block text-sm mb-1">WhatsApp / Phone</label>
+              <label className="block text-sm mb-1 text-white">WhatsApp / Téléphone</label>
               <input
                 value={whatsappPhone}
                 onChange={(e) => setWhatsappPhone(e.target.value)}
-                className="w-full mb-3 p-2 rounded-md bg-[#1a1d22] border border-[#333] text-sm"
+                className="w-full mb-3 p-2 rounded-md bg-[#1a1d22] border border-[#333] text-sm text-white"
                 required
               />
 
-              <label className="block text-sm mb-1">Transaction Ref</label>
+              <label className="block text-sm mb-1 text-white">Référence de transaction</label>
               <input
                 value={transactionNum}
                 onChange={(e) => setTransactionNum(e.target.value)}
-                className="w-full mb-5 p-2 rounded-md bg-[#1a1d22] border border-[#333] text-sm"
+                className="w-full mb-5 p-2 rounded-md bg-[#1a1d22] border border-[#333] text-sm text-white"
                 required
               />
 
@@ -205,7 +220,7 @@ const Checkout = () => {
                 onClick={handlePlaceOrder}
                 className="w-full bg-green-600 hover:bg-green-700 py-3 rounded-md font-semibold uppercase tracking-wider"
               >
-                Place Order
+                Passer la commande
               </button>
             </div>
           )}

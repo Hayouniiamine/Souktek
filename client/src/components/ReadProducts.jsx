@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import  API_BASE_URL  from '../config';
+import API_BASE_URL from '../config';
 
 const ReadProducts = () => {
   const [products, setProducts] = useState([]);
@@ -32,18 +32,18 @@ const ReadProducts = () => {
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-center text-gray-800 mb-10">All Products</h1>
+        <h1 className="text-3xl font-bold text-center text-gray-900 mb-10">All Products</h1>
 
         {/* Filter dropdown */}
         <div className="mb-6 flex justify-center">
-          <label htmlFor="filter" className="mr-3 font-semibold text-gray-700">
+          <label htmlFor="filter" className="mr-3 font-semibold text-gray-900">
             Filter by type:
           </label>
           <select
             id="filter"
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            className="p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="p-2 border border-gray-400 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 text-gray-900"
           >
             <option value="all">All</option>
             {types.map((type) => (
@@ -78,9 +78,9 @@ const ReadProducts = () => {
                   />
                 </div>
                 <div className="p-4 flex flex-col flex-1">
-                  <h3 className="text-xl font-semibold mb-2">{product.name}</h3>
-                  <p className="text-gray-600 text-sm flex-1">{product.description}</p>
-                  <p className="text-green-600 font-bold mt-2">${product.price}</p>
+                  <h3 className="text-xl font-semibold mb-2 text-gray-900">{product.name}</h3>
+                  <p className="text-gray-700 text-sm flex-1">{product.description}</p>
+                  <p className="text-green-800 font-bold mt-2">TND {product.price}</p>
                 </div>
               </div>
             ))}

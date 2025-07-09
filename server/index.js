@@ -69,12 +69,23 @@ const ADMIN_NOTIFICATION_EMAIL = process.env.ADMIN_NOTIFICATION_EMAIL || 'soukte
 
 const sendOrderNotificationEmail = async (orderDetails) => {
   const {
-    orderId, product_name, payment_method, email, phone,
-    transaction_number, order_time, user_created
+    orderId,
+    products,           // Expecting an array of { product_name, quantity }
+    payment_method,
+    email,
+    phone,
+    transaction_number,
+    order_time,
+    user_created
   } = orderDetails;
 
+  // Build an HTML list of products
+  const productsHtml = products && products.length > 0
+    ? `<ul>${products.map(p => `<li>${p.product_name} ${p.quantity ? `(Qty: ${p.quantity})` : ''}</li>`).join('')}</ul>`
+    : '<p>No products listed.</p>';
+
   const mailOptions = {
-    from: `"Souktek Store" <${process.env.EMAIL_USER}>`, // Use environment variable
+    from: `"Souktek Store" <${process.env.EMAIL_USER}>`,
     to: ADMIN_NOTIFICATION_EMAIL,
     subject: `New Order Placed! Order ID: ${orderId}`,
     html: `
@@ -82,7 +93,8 @@ const sendOrderNotificationEmail = async (orderDetails) => {
         <h2 style="color: #4CAF50;">New Order Notification</h2>
         <p>A new order has been successfully placed on your store!</p>
         <p><strong>Order ID:</strong> ${orderId}</p>
-        <p><strong>Product:</strong> ${product_name}</p>
+        <p><strong>Products Ordered:</strong></p>
+        ${productsHtml}
         <p><strong>Payment Method:</strong> ${payment_method}</p>
         <p><strong>Customer Email:</strong> ${email}</p>
         <p><strong>Customer Phone:</strong> ${phone || 'N/A'}</p>
@@ -103,6 +115,7 @@ const sendOrderNotificationEmail = async (orderDetails) => {
     console.error(`Failed to send order notification email for Order ID: ${orderId}:`, error);
   }
 };
+
 
 // ---------------------------------------------------------------------------------\
 // JWT Authentication Middleware
@@ -164,6 +177,7 @@ app.get("/api/products/total-income", authorizeAdmin, async (req, res) => {
     res.status(500).json({ message: "Failed to fetch total income" });
   }
 });
+
 
 // ------------------------------------------------------------Order count----------------------------------------------------------------------------------------------------------------
 app.get("/api/orders/count", authorizeAdmin, async (req, res) => {
@@ -563,31 +577,27 @@ app.get("/api/orders/user/:email", verifyToken, async (req, res) => {
   }
 });
 
-// ✅ UPDATED: Order placement route with automatic user creation and product_id
+// Order placement route with automatic user creation and product_id
 app.post("/api/orders", async (req, res) => {
-  const {
-    product_id,
-    product_name,
-    payment_method,
-    email,
-    phone,
-    transaction_number,
-  } = req.body;
+  const { products, payment_method, email, phone, transaction_number } = req.body;
 
-  if (!product_id || !product_name || !email || !payment_method) {
+  if (
+    !Array.isArray(products) || products.length === 0 ||
+    !email || !payment_method
+  ) {
     return res.status(400).json({
-      message: "Missing required order information (product_id, product_name, email, payment_method are mandatory)",
+      message: "Missing required order information or empty products array",
     });
   }
 
   const normalizedEmail = email.trim().toLowerCase();
 
   let client;
-
   try {
     client = await pool.connect();
     await client.query("BEGIN");
 
+    // Check if user exists or create
     let userId;
     let userWasCreated = false;
 
@@ -597,7 +607,6 @@ app.post("/api/orders", async (req, res) => {
     );
 
     if (userCheckResult.rows.length === 0) {
-      console.log(`User with email ${normalizedEmail} not found. Creating new user...`);
       const randomPassword = Math.random().toString(36).slice(-10);
       const hashedPassword = await bcrypt.hash(randomPassword, 10);
       const username = normalizedEmail.split('@')[0] || "Customer";
@@ -609,60 +618,62 @@ app.post("/api/orders", async (req, res) => {
 
       userId = newUserResult.rows[0].id;
       userWasCreated = true;
-      console.log(`New user created with ID: ${userId}`);
     } else {
       userId = userCheckResult.rows[0].id;
-      console.log(`User with email ${normalizedEmail} found with ID: ${userId}.`);
     }
 
-    const orderResult = await client.query(
-      `INSERT INTO orders (user_id, product_id, product_name, payment_method, email, phone, transaction_number, order_time)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
-       RETURNING *`,
-      [
-        userId,
-        product_id,
-        product_name,
-        payment_method,
-        normalizedEmail,
-        phone || null,
-        transaction_number || null,
-      ]
-    );
+    // Insert all orders in one go
+    const insertedOrders = [];
+
+    for (const product of products) {
+      if (!product.product_id || !product.product_name) {
+        await client.query("ROLLBACK");
+        return res.status(400).json({ message: "Each product must have product_id and product_name" });
+      }
+
+      const orderResult = await client.query(
+        `INSERT INTO orders (user_id, product_id, product_name, payment_method, email, phone, transaction_number, order_time)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+         RETURNING *`,
+        [
+          userId,
+          product.product_id,
+          product.product_name,
+          payment_method,
+          normalizedEmail,
+          phone || null,
+          transaction_number || null,
+        ]
+      );
+      insertedOrders.push(orderResult.rows[0]);
+    }
 
     await client.query("COMMIT");
-    const placedOrder = orderResult.rows[0];
-    console.log(`Order placed successfully. Order ID: ${placedOrder.id}`);
 
+    // Compose a single notification email with all ordered products
     await sendOrderNotificationEmail({
-      orderId: placedOrder.id,
-      product_name: placedOrder.product_name,
-      payment_method: placedOrder.payment_method,
-      email: placedOrder.email,
-      phone: placedOrder.phone,
-      transaction_number: placedOrder.transaction_number,
-      order_time: placedOrder.order_time,
-      user_created: userWasCreated
+      orderId: insertedOrders.map(o => o.id).join(", "),
+      products: insertedOrders,
+      payment_method,
+      email: normalizedEmail,
+      phone,
+      transaction_number,
+      user_created: userWasCreated,
     });
 
     res.status(201).json({
       message: "Order placed successfully",
-      order: placedOrder,
-      user_created: userWasCreated
+      orders: insertedOrders,
+      user_created: userWasCreated,
     });
-
   } catch (err) {
     if (client) {
       await client.query("ROLLBACK");
-      console.error("Transaction rolled back due to error.");
     }
-    console.error("Error processing order:", err.message || err);
+    console.error("Error processing order:", err);
     res.status(500).json({ message: "Error processing order. Please try again." });
   } finally {
-    if (client) {
-      client.release();
-      console.log("Database client released.");
-    }
+    if (client) client.release();
   }
 });
 
