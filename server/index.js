@@ -273,18 +273,27 @@ app.get("/api/product_options/:productId", async (req, res) => {
     res.status(500).json({ message: "Error fetching product options" });
   }
 });
-
 // Create a new product (ADMIN ONLY)
 app.post("/api/products", authorizeAdmin, upload.single("image"), async (req, res) => {
   const { name, price, description, type, options } = req.body;
-  const image = req.file ? req.file.filename : null;
+  const image = req.file ? req.file.filename : ''; // Use empty string instead of null
 
+  // Validate required fields
   if (!name || !price || !description || !type) {
     return res.status(400).json({
       message: "Name, price, description, and type are required",
     });
   }
 
+  // Optional: Validate price format (since now it's a string range like "5.00 - 50.00")
+  const priceRegex = /^\d+(\.\d{2})?\s*-\s*\d+(\.\d{2})?$/;
+  if (typeof price !== 'string' || !priceRegex.test(price)) {
+    return res.status(400).json({
+      message: "Price must be a string in the format '5.00 - 50.00'",
+    });
+  }
+
+  // Parse options
   let parsedOptions = [];
   if (options) {
     try {
@@ -300,6 +309,7 @@ app.post("/api/products", authorizeAdmin, upload.single("image"), async (req, re
   try {
     await client.query("BEGIN");
 
+    // Insert product
     const productResult = await client.query(
       "INSERT INTO products (name, price, description, img, type) VALUES ($1, $2, $3, $4, $5) RETURNING *",
       [name, price, description, image, type]
@@ -307,10 +317,11 @@ app.post("/api/products", authorizeAdmin, upload.single("image"), async (req, re
 
     const productId = productResult.rows[0].id;
 
+    // Insert product options
     for (const opt of parsedOptions) {
       const { label, price: optPrice, description: optDesc } = opt;
 
-      if (!label || optPrice === undefined || optDesc === undefined) { // Check for undefined to allow 0 price/empty string description
+      if (!label || optPrice === undefined || optDesc === undefined) {
         await client.query("ROLLBACK");
         return res.status(400).json({
           message: "Each option must have label, price, and description",
@@ -332,11 +343,15 @@ app.post("/api/products", authorizeAdmin, upload.single("image"), async (req, re
   } catch (err) {
     await client.query("ROLLBACK");
     console.error("Error creating product and options:", err);
-    res.status(500).json({ message: "Error creating product and options" });
+    res.status(500).json({
+      message: "Error creating product and options",
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined,
+    });
   } finally {
     client.release();
   }
 });
+
 
 // Delete a product by ID (ADMIN ONLY)
 app.delete("/api/products/:id", authorizeAdmin, async (req, res) => {
