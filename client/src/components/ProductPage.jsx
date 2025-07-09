@@ -4,7 +4,7 @@ import Footer from "./Footer";
 import { ShoppingCart } from "lucide-react";
 import { useCart } from "./context/CartContext";
 import API_BASE_URL from "../config";
-import { getImageUrl } from "../utils/imageHelper"; // 👈 Import image helper
+import { getImageUrl } from "../utils/imageHelper"; // ✅ Import helper
 
 export default function ProductPage() {
   const { name } = useParams();
@@ -123,8 +123,7 @@ export default function ProductPage() {
           <h2 className="text-xl font-semibold mb-4">More like this</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {moreProducts.map((p) => {
-              const pImage = getImageUrl(p.img); // ✅ Updated here
-
+              const pImage = getImageUrl(p.img);
               return (
                 <Link
                   key={p.name}
