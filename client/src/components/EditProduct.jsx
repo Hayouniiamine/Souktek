@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import API_BASE_URL from "../config";
-import { getImageUrl } from "../utils/imageHelper"; // ✅ imported helper
 
 const EditProduct = () => {
   const { id } = useParams();
@@ -12,7 +11,7 @@ const EditProduct = () => {
     price: "",
     img: "",
     description: "",
-    type: "",
+    type: "", // needed by backend
   });
   const [options, setOptions] = useState([]);
   const [image, setImage] = useState(null);
@@ -71,12 +70,15 @@ const EditProduct = () => {
   const handleDeleteOption = async (optionId) => {
     const token = localStorage.getItem("token");
     if (!token) return alert("Login required.");
+
     if (!window.confirm("Are you sure you want to delete this option?")) return;
 
     try {
       const res = await fetch(`${API_BASE_URL}/api/product_options/${optionId}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       if (!res.ok) {
@@ -117,7 +119,9 @@ const EditProduct = () => {
     try {
       const productRes = await fetch(`${API_BASE_URL}/api/products/${id}`, {
         method: "PUT",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
         body: productFormData,
       });
 
@@ -193,8 +197,7 @@ const EditProduct = () => {
               <input type="file" onChange={(e) => setImage(e.target.files[0])} className="text-black" />
               {product.img && (
                 <div className="mt-3">
-                  {/* ✅ Using helper for image URL */}
-                  <img src={getImageUrl(product.img)} alt="Current" className="max-h-40 rounded shadow" />
+                  <img src={`${API_BASE_URL}${product.img}`} alt="Current" className="max-h-40 rounded shadow" />
                 </div>
               )}
             </div>

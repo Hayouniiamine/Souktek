@@ -1,101 +1,67 @@
 const express = require("express");
 const cors = require("cors");
 const pool = require("./db"); // Assuming db.js connects to your PostgreSQL database
-const bcrypt = require("bcryptjs");
+const bcrypt = require("bcryptjs"); // Using bcryptjs for broader compatibility
 const path = require("path");
 const multer = require("multer");
 const nodemailer = require("nodemailer");
 const jwt = require("jsonwebtoken");
-const fs = require("fs");
 
 const app = express();
-function printRoutes(stack, prefix = '') {
-  stack.forEach((layer) => {
-    if (layer.route) {
-      // routes registered directly on the app
-      const methods = Object.keys(layer.route.methods).join(', ').toUpperCase();
-      console.log(`${methods} ${prefix}${layer.route.path}`);
-    } else if (layer.name === 'router' && layer.handle.stack) {
-      // router middleware 
-      printRoutes(layer.handle.stack, prefix + (layer.regexp.source.replace('^\\','').replace('\\/?(?=\\/|$)','')));
-    } else if (layer.name === 'bound dispatch') {
-      // ignore
-    } else {
-      console.log(`Middleware: ${layer.name} ${prefix}${layer.regexp}`);
-    }
-  });
-}
 
-
-// ---------------------------
-// Create uploads folder if missing on Railway volume
-// ---------------------------
-
-const uploadsDir = "/mnt/volume/images"; // Volume mount path
-
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-  console.log(`✅ Created uploads directory at ${uploadsDir}`);
-} else {
-  console.log(`✅ Uploads directory already exists at ${uploadsDir}`);
-}
-
-// ---------------------------
+// ---------------------------\
 // Middleware Configuration
-// ---------------------------
+// ---------------------------\
 
+// Use environment variable for frontend URL in CORS for better deployment flexibility
 app.use(cors({
-  origin: process.env.FRONTEND_URL || '*',
+  origin: process.env.FRONTEND_URL || '*', // Allow all origins if not specified (for dev/testing)
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 app.use(express.json());
 
-// Serve React frontend build
+// Serve static React build files for the frontend application
 app.use(express.static(path.join(__dirname, "../client/build")));
 
-// Serve existing images from client/public/images
+// Specifically serve image files from the public/images folder (used for Multer uploads)
 app.use(
   "/images",
   express.static(path.join(__dirname, "../client/public/images"))
 );
 
-// Serve new uploaded images from volume
-app.use(
-  "/uploads",
-  express.static(uploadsDir)
-);
-
-// ---------------------------
-// Multer setup for image uploads to volume
-// ---------------------------
+// ---------------------------------------------------------------------------------------------------------------------------------------\
+// Multer Configuration (for Image Uploading)
+// ------------------------------------------------------------------------------------------------------------\
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, uploadsDir);
+    cb(null, path.join(__dirname, "../client/public/images"));
   },
   filename: (req, file, cb) => {
     cb(null, Date.now() + path.extname(file.originalname));
   },
 });
-const upload = multer({ storage });
 
-// ---------------------------
-// Environment variables and constants
-// ---------------------------
+const upload = multer({ storage: storage });
 
+// ---------------------------------------------------------------------------------------------------------------------------------------\
+// Environment Variables and Constants
+// ---------------------------------------------------------------------------------------------------------------------------------------\
+
+// IMPORTANT: These should be set as environment variables in your deployment environment
 const JWT_SECRET = process.env.JWT_SECRET;
 const adminSecretKey = process.env.ADMIN_SECRET_KEY;
 
-// ---------------------------
-// Nodemailer setup
-// ---------------------------
+// ------------------------------------------------------------------------------------------------------------------------------------------------------------------\
+// Nodemailer Configuration
+// ---------------------------------------------------------------------------------------------------------------------------------------\
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    user: process.env.EMAIL_USER, // Use environment variable
+    pass: process.env.EMAIL_PASS, // Use environment variable
   },
 });
 
@@ -104,7 +70,7 @@ const ADMIN_NOTIFICATION_EMAIL = process.env.ADMIN_NOTIFICATION_EMAIL || 'soukte
 const sendOrderNotificationEmail = async (orderDetails) => {
   const {
     orderId,
-    products,
+    products,           // Expecting an array of { product_name, quantity }
     payment_method,
     email,
     phone,
@@ -113,6 +79,7 @@ const sendOrderNotificationEmail = async (orderDetails) => {
     user_created
   } = orderDetails;
 
+  // Build an HTML list of products
   const productsHtml = products && products.length > 0
     ? `<ul>${products.map(p => `<li>${p.product_name} ${p.quantity ? `(Qty: ${p.quantity})` : ''}</li>`).join('')}</ul>`
     : '<p>No products listed.</p>';
@@ -149,44 +116,44 @@ const sendOrderNotificationEmail = async (orderDetails) => {
   }
 };
 
-// ---------------------------
-// JWT Authentication Middleware
-// ---------------------------
 
+// ---------------------------------------------------------------------------------\
+// JWT Authentication Middleware
+// ------------------------------------------------------------------------------------------------------------\
+
+// Middleware to verify JWT token
 const verifyToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   if (!authHeader) {
     return res.status(401).json({ message: "Authentication token is required." });
   }
-  const token = authHeader.split(' ')[1];
+
+  const token = authHeader.split(' ')[1]; // Expects "Bearer TOKEN"
   if (!token) {
     return res.status(401).json({ message: "Authentication token is missing." });
   }
+
   jwt.verify(token, JWT_SECRET, (err, user) => {
     if (err) {
       console.error("JWT Verification Error:", err.message);
       return res.status(403).json({ message: "Invalid or expired token." });
     }
-    req.user = user;
+    req.user = user; // Attach user payload to the request object
     next();
   });
 };
 
+// ------------------------------------------------------Middleware to authorize admin access (uses verifyToken first)-------------------------------------------------------
 const authorizeAdmin = (req, res, next) => {
-  verifyToken(req, res, () => {
+  verifyToken(req, res, () => { // Call verifyToken first
     if (req.user && req.user.is_admin) {
-      next();
+      next(); // User is authenticated and is an admin
     } else {
       return res.status(403).json({ message: "Access Denied: Not an administrator." });
     }
   });
 };
-
-// ---------------------------
-// Routes
-// ---------------------------
-
-// Total product count
+// --------------------------------------------------------Total product count------------------------------------------------------------------------------------
 app.get("/api/products/total-count", authorizeAdmin, async (req, res) => {
   try {
     const result = await pool.query("SELECT COUNT(id) AS total_products FROM products");
@@ -197,7 +164,7 @@ app.get("/api/products/total-count", authorizeAdmin, async (req, res) => {
   }
 });
 
-// Total income
+// --------------------------------------------------------Total income (TND)--------------------------------------------------------
 app.get("/api/products/total-income", authorizeAdmin, async (req, res) => {
   try {
     const result = await pool.query(`
@@ -211,7 +178,8 @@ app.get("/api/products/total-income", authorizeAdmin, async (req, res) => {
   }
 });
 
-// Order count
+
+// ------------------------------------------------------------Order count----------------------------------------------------------------------------------------------------------------
 app.get("/api/orders/count", authorizeAdmin, async (req, res) => {
   try {
     const result = await pool.query("SELECT COUNT(*) AS total_orders FROM orders");
@@ -222,7 +190,7 @@ app.get("/api/orders/count", authorizeAdmin, async (req, res) => {
   }
 });
 
-// Most popular product
+// --------------------------------------------------------------Most popular product----------------------------------------------------------------------------------------
 app.get("/api/products/most-popular", authorizeAdmin, async (req, res) => {
   try {
     const result = await pool.query(`
@@ -242,7 +210,12 @@ app.get("/api/products/most-popular", authorizeAdmin, async (req, res) => {
   }
 });
 
-// Get product by name
+
+// ------------------------------------------------------------------------------------------------------------------------------------------------------------------\
+// PRODUCT & OPTION ROUTES
+// ------------------------------------------------------------------------------------------------------------------------------------------------------------------\
+
+// Get a single product by name
 app.get("/api/products/name/:name", async (req, res) => {
   const productName = req.params.name.trim();
   try {
@@ -260,7 +233,7 @@ app.get("/api/products/name/:name", async (req, res) => {
   }
 });
 
-// Fetch all products
+// Fetch all products from the database
 app.get("/api/products", async (req, res) => {
   try {
     const result = await pool.query("SELECT * FROM products");
@@ -271,7 +244,7 @@ app.get("/api/products", async (req, res) => {
   }
 });
 
-// Fetch product by ID
+// Fetch a specific product by its ID
 app.get("/api/products/:id", async (req, res) => {
   const { id } = req.params;
   try {
@@ -288,7 +261,7 @@ app.get("/api/products/:id", async (req, res) => {
   }
 });
 
-// Fetch product options
+// Fetch product options for a given product ID
 app.get("/api/product_options/:productId", async (req, res) => {
   const { productId } = req.params;
   try {
@@ -305,18 +278,21 @@ app.get("/api/product_options/:productId", async (req, res) => {
     res.status(500).json({ message: "Error fetching product options" });
   }
 });
+// -----------------------------------------------------------------------------------------------------------------------------------------------------
 
-// Create new product (ADMIN ONLY)
+// Create a new product (ADMIN ONLY)
 app.post("/api/products", authorizeAdmin, upload.single("image"), async (req, res) => {
   const { name, price, description, type, options } = req.body;
-  const image = req.file ? req.file.filename : '';
+  const image = req.file ? req.file.filename : ''; // Use empty string instead of null
 
+  // Validate required fields
   if (!name || !price || !description || !type) {
     return res.status(400).json({
       message: "Name, price, description, and type are required",
     });
   }
 
+  // Optional: Validate price format (since now it's a string range like "5.00 - 50.00")
   const priceRegex = /^\d+(\.\d{2})?\s*-\s*\d+(\.\d{2})?$/;
   if (typeof price !== 'string' || !priceRegex.test(price)) {
     return res.status(400).json({
@@ -324,6 +300,7 @@ app.post("/api/products", authorizeAdmin, upload.single("image"), async (req, re
     });
   }
 
+  // Parse options
   let parsedOptions = [];
   if (options) {
     try {
@@ -339,6 +316,7 @@ app.post("/api/products", authorizeAdmin, upload.single("image"), async (req, re
   try {
     await client.query("BEGIN");
 
+    // Insert product
     const productResult = await client.query(
       "INSERT INTO products (name, price, description, img, type) VALUES ($1, $2, $3, $4, $5) RETURNING *",
       [name, price, description, image, type]
@@ -346,6 +324,7 @@ app.post("/api/products", authorizeAdmin, upload.single("image"), async (req, re
 
     const productId = productResult.rows[0].id;
 
+    // Insert product options
     for (const opt of parsedOptions) {
       const { label, price: optPrice, description: optDesc } = opt;
 
@@ -379,8 +358,9 @@ app.post("/api/products", authorizeAdmin, upload.single("image"), async (req, re
     client.release();
   }
 });
+// -----------------------------------------------------------------------------------------------------------------------------------------------------
 
-// Delete product by ID (ADMIN ONLY)
+//-------------------------------Delete a product by ID (ADMIN ONLY)------------------------------------------------------------------------------------
 app.delete("/api/products/:id", authorizeAdmin, async (req, res) => {
   const { id } = req.params;
 
@@ -402,7 +382,7 @@ app.delete("/api/products/:id", authorizeAdmin, async (req, res) => {
   }
 });
 
-// Update product and options (ADMIN ONLY)
+//--------------------------------------------------------------------------------- Update product and all its options together (ADMIN ONLY)---------------------------------------------------------------------------------
 app.put("/api/products/:id", authorizeAdmin, upload.single("image"), async (req, res) => {
   const { id } = req.params;
   const { name, price, description, type, options } = req.body;
@@ -485,7 +465,8 @@ app.put("/api/products/:id", authorizeAdmin, upload.single("image"), async (req,
   }
 });
 
-// Update a single product option by ID (ADMIN ONLY)
+
+//----------------------------- Update a single product option by its ID (ADMIN ONLY)-------------------------
 app.put("/api/product_options/:id", authorizeAdmin, async (req, res) => {
   const { id } = req.params;
   const { label, price, description } = req.body;
@@ -516,8 +497,8 @@ app.put("/api/product_options/:id", authorizeAdmin, async (req, res) => {
     res.status(500).json({ message: "Error updating product option" });
   }
 });
+// -------------Delete a Single Product Option ----------------------------------------------------\
 
-// Delete a product option by ID (ADMIN ONLY)
 app.delete("/api/product_options/:id", authorizeAdmin, async (req, res) => {
   const { id } = req.params;
 
@@ -541,7 +522,11 @@ app.delete("/api/product_options/:id", authorizeAdmin, async (req, res) => {
   }
 });
 
-// Fetch all orders (ADMIN ONLY)
+// --------------------------------------------------------------------------------------\
+// ORDERS ROUTES
+// -----------------------------------------------------------------------------------------------\
+
+// Route to fetch all orders for admin dashboard (ADMIN ONLY)
 app.get("/api/orders/all", authorizeAdmin, async (req, res) => {
   try {
     const result = await pool.query(
@@ -549,186 +534,312 @@ app.get("/api/orders/all", authorizeAdmin, async (req, res) => {
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ message: "No orders found" });
+      return res.status(404).json({ message: "No orders found in the system." });
     }
 
     res.json(result.rows);
   } catch (err) {
-    console.error("Error fetching orders:", err);
-    res.status(500).json({ message: "Error fetching orders" });
+    console.error("Error fetching all orders:", err.message || err);
+    res.status(500).json({ message: "Error fetching all orders." });
   }
 });
 
-// Get orders for a specific user by email
-app.get("/api/orders/user/:email", async (req, res) => {
+// Route to fetch orders by email (can be accessed by authenticated users, not just admin)
+app.get("/api/orders/user/:email", verifyToken, async (req, res) => {
   const { email } = req.params;
+  const userEmailFromToken = req.user.email;
+
+  // IMPORTANT: Ensure the requesting user is either an admin OR the owner of the email
+  if (userEmailFromToken.toLowerCase() !== email.trim().toLowerCase() && !req.user.is_admin) {
+    return res.status(403).json({ message: "Access Denied: You can only view your own orders." });
+  }
+
+  if (!email) {
+    return res.status(400).json({ message: "Email parameter is required." });
+  }
+
+  const normalizedEmail = email.trim().toLowerCase();
+
   try {
     const result = await pool.query(
       "SELECT * FROM orders WHERE email = $1 ORDER BY order_time DESC",
-      [email]
+      [normalizedEmail]
     );
+
     if (result.rows.length === 0) {
-      return res.status(404).json({ message: "No orders found for this user" });
+      return res.status(404).json({ message: "No orders found for this email." });
     }
+
     res.json(result.rows);
   } catch (err) {
-    console.error("Error fetching orders for user:", err);
-    res.status(500).json({ message: "Error fetching orders" });
+    console.error("Error fetching orders by email:", err.message || err);
+    res.status(500).json({ message: "Error fetching orders." });
   }
 });
 
-// Create order, create user if not exists, send email notification
+// Order placement route with automatic user creation and product_id
 app.post("/api/orders", async (req, res) => {
-  const {
-    products,
-    payment_method,
-    email,
-    phone,
-    transaction_number,
-    order_time,
-    password,
-    user_created = false,
-  } = req.body;
+  const { products, payment_method, email, phone, transaction_number } = req.body;
 
-  if (!products || !Array.isArray(products) || products.length === 0) {
-    return res.status(400).json({ message: "Products array is required" });
-  }
-  if (!payment_method || !email || !order_time) {
-    return res.status(400).json({ message: "Payment method, email and order time are required" });
+  if (
+    !Array.isArray(products) || products.length === 0 ||
+    !email || !payment_method
+  ) {
+    return res.status(400).json({
+      message: "Missing required order information or empty products array",
+    });
   }
 
-  const client = await pool.connect();
+  const normalizedEmail = email.trim().toLowerCase();
 
+  let client;
   try {
+    client = await pool.connect();
     await client.query("BEGIN");
 
-    // Check if user exists
-    const userResult = await client.query(
-      "SELECT * FROM users WHERE email = $1",
-      [email]
+    // Check if user exists or create
+    let userId;
+    let userWasCreated = false;
+
+    const userCheckResult = await client.query(
+      "SELECT id FROM users WHERE email = $1",
+      [normalizedEmail]
     );
 
-    if (userResult.rows.length === 0) {
-      if (!password) {
-        await client.query("ROLLBACK");
-        return res.status(400).json({ message: "Password required to create new user" });
-      }
-      // Create new user with hashed password
-      const hashedPassword = await bcrypt.hash(password, 12);
-      await client.query(
-        "INSERT INTO users (email, password) VALUES ($1, $2)",
-        [email, hashedPassword]
+    if (userCheckResult.rows.length === 0) {
+      const randomPassword = Math.random().toString(36).slice(-10);
+      const hashedPassword = await bcrypt.hash(randomPassword, 10);
+      const username = normalizedEmail.split('@')[0] || "Customer";
+
+      const newUserResult = await client.query(
+        "INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING id",
+        [username, normalizedEmail, hashedPassword]
       );
+
+      userId = newUserResult.rows[0].id;
+      userWasCreated = true;
+    } else {
+      userId = userCheckResult.rows[0].id;
     }
 
-    // Insert order
-    const insertOrderResult = await client.query(
-      "INSERT INTO orders (products, payment_method, email, phone, transaction_number, order_time) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
-      [JSON.stringify(products), payment_method, email, phone, transaction_number, order_time]
-    );
+    // Insert all orders in one go
+    const insertedOrders = [];
+
+    for (const product of products) {
+      if (!product.product_id || !product.product_name) {
+        await client.query("ROLLBACK");
+        return res.status(400).json({ message: "Each product must have product_id and product_name" });
+      }
+
+      const orderResult = await client.query(
+        `INSERT INTO orders (user_id, product_id, product_name, payment_method, email, phone, transaction_number, order_time)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+         RETURNING *`,
+        [
+          userId,
+          product.product_id,
+          product.product_name,
+          payment_method,
+          normalizedEmail,
+          phone || null,
+          transaction_number || null,
+        ]
+      );
+      insertedOrders.push(orderResult.rows[0]);
+    }
 
     await client.query("COMMIT");
 
-    // Send notification email (async, no need to block response)
-    sendOrderNotificationEmail({
-      orderId: insertOrderResult.rows[0].id,
-      products,
+    // Compose a single notification email with all ordered products
+    await sendOrderNotificationEmail({
+      orderId: insertedOrders.map(o => o.id).join(", "),
+      products: insertedOrders,
       payment_method,
-      email,
+      email: normalizedEmail,
       phone,
       transaction_number,
-      order_time,
-      user_created,
+      user_created: userWasCreated,
     });
 
     res.status(201).json({
       message: "Order placed successfully",
-      order: insertOrderResult.rows[0],
+      orders: insertedOrders,
+      user_created: userWasCreated,
     });
   } catch (err) {
-    await client.query("ROLLBACK");
-    console.error("Error placing order:", err);
-    res.status(500).json({ message: "Failed to place order" });
+    if (client) {
+      await client.query("ROLLBACK");
+    }
+    console.error("Error processing order:", err);
+    res.status(500).json({ message: "Error processing order. Please try again." });
   } finally {
-    client.release();
+    if (client) client.release();
   }
 });
 
-// Authentication - login
-app.post("/api/auth/login", async (req, res) => {
-  const { email, password } = req.body;
 
-  if (!email || !password) {
-    return res
-      .status(400)
-      .json({ message: "Email and password are required" });
+
+
+
+// ---------------------------\
+// USER AUTHENTICATION ROUTES
+// ---------------------------\
+
+// Sign up a new user with hashed password
+app.post("/api/auth/signup", async (req, res) => { // Changed route to match deployed
+  const { username, email, password, phone, is_admin, avatar } = req.body; // Added phone, is_admin, avatar
+
+  if (!username || !email || !password || !phone) { // phone is now required based on deployed code
+    return res.status(400).json({ message: "Please provide username, email, password, and phone." });
   }
 
   try {
+    const userExists = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
+    if (userExists.rows.length > 0) {
+      return res.status(409).json({ message: "User already exists with this email." });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const newUser = await pool.query(
+      "INSERT INTO users (email, password, phone, username, is_admin, avatar) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
+      [email, hashedPassword, phone, username, is_admin || false, avatar || null]
+    );
+
+    const token = jwt.sign(
+      { id: newUser.rows[0].id, email: newUser.rows[0].email, is_admin: newUser.rows[0].is_admin },
+      JWT_SECRET,
+      { expiresIn: "7d" } // Increased expiry to 7 days as in deployed code
+    );
+
+    res.status(201).json({ message: "User created successfully", token, user: newUser.rows[0] });
+  } catch (err) {
+    console.error("Signup error:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// Login route (UPDATED TO ISSUE JWT and match deployed route)
+app.post("/api/auth/login", async (req, res) => { // Changed route to match deployed
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ message: "Email and password required." });
+  }
+
+  try {
+    const userResult = await pool.query("SELECT * FROM users WHERE email = $1", [
+      email.trim(),
+    ]);
+    if (userResult.rows.length === 0) {
+      return res.status(401).json({ message: "Invalid credentials." });
+    }
+
+    const user = userResult.rows[0];
+
+    // Fix for potential $2y$ vs $2b$ hash prefix issue from some bcrypt versions
+    const fixedHash = user.password.replace(/^\$2y\$/, "$2b$");
+
+    const isMatch = await bcrypt.compare(password, fixedHash);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid credentials." });
+    }
+
+    const token = jwt.sign(
+      { id: user.id, email: user.email, is_admin: user.is_admin },
+      JWT_SECRET,
+      { expiresIn: "7d" } // Consistent expiry with signup
+    );
+
+    // Prepare user data to send to frontend (excluding password)
+    const userData = {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      is_admin: user.is_admin,
+      phone: user.phone, // Include phone from user data
+      avatar: user.avatar // Include avatar from user data
+    };
+
+    res.json({ message: "Login successful", token, user: userData });
+  } catch (err) {
+    console.error("Login error:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// Route to change password (can be accessed by authenticated users)
+app.put("/api/users/password", verifyToken, async (req, res) => {
+  const { newPassword } = req.body;
+  const userEmailFromToken = req.user.email; // Email from the verified JWT token
+
+  if (!newPassword) {
+    return res.status(400).json({ message: "New password is required" });
+  }
+
+  try {
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
     const result = await pool.query(
-      "SELECT * FROM users WHERE email = $1",
-      [email]
+      "UPDATE users SET password = $1 WHERE email = $2 RETURNING id",
+      [hashedPassword, userEmailFromToken]
     );
 
     if (result.rows.length === 0) {
-      return res.status(401).json({ message: "Invalid credentials" });
+      return res.status(404).json({ message: "User not found or no changes made." });
     }
 
-    const user = result.rows[0];
-    const isMatch = await bcrypt.compare(password, user.password);
-
-    if (!isMatch) {
-      return res.status(401).json({ message: "Invalid credentials" });
-    }
-
-    const tokenPayload = {
-      id: user.id,
-      email: user.email,
-      is_admin: user.is_admin,
-    };
-
-    const token = jwt.sign(tokenPayload, JWT_SECRET, {
-      expiresIn: "1d",
-    });
-
-    res.json({
-      token,
-      user: tokenPayload,
-    });
+    res.json({ message: "Password updated successfully" });
   } catch (err) {
-    console.error("Login error:", err);
-    res.status(500).json({ message: "Server error" });
+    console.error("Error updating password:", err);
+    res.status(500).json({ message: "Error updating password" });
   }
 });
 
-// Admin secret key verification
+// Admin Secret Key Verification (now requires JWT authentication)
 app.post("/api/admin/verify-secret", verifyToken, async (req, res) => {
   const { secretKey } = req.body;
+
   if (!secretKey) {
-    return res.status(400).json({ message: "Secret key is required" });
+    return res.status(400).json({ message: "Secret key is required." });
   }
+
+  // Ensure the user is an admin before checking the secret key
+  if (!req.user || !req.user.is_admin) {
+    return res.status(403).json({ message: "Access Denied: Not an administrator." });
+  }
+
+  // Compare the provided secret key with the one configured on the server
   if (secretKey === adminSecretKey) {
-    return res.json({ message: "Secret key is valid" });
+    return res.status(200).json({ message: "Admin secret key verified successfully." });
+  } else {
+    return res.status(401).json({ message: "Invalid admin secret key." });
   }
-  return res.status(401).json({ message: "Invalid secret key" });
 });
 
-// React frontend SPA fallback (for client-side routing)
-app.get("*", (req, res) => {
+// Default catch-all handler to serve React app for any other routes
+app.use((req, res) => {
   res.sendFile(path.join(__dirname, "../client/build/index.html"));
 });
 
+// --- Quick DB-connect test on boot ---------------------------------
+pool.connect()
+  .then(client => {
+    return client.query('SELECT NOW()')        // any light query is fine
+      .then(res => {
+        console.log('✅  DB connected – current time:', res.rows[0].now);
+        client.release();
+      });
+  })
+  .catch(err => {
+    console.error('❌  DB connection error:', err.message || err);
+    // optional: process.exit(1);   // crash app so Railway restarts until env is fixed
+  });
+// -------------------------------------------------------------------
 
-
-// After your routes and middleware setup, add:
-console.log('Registered routes and middleware:');
-printRoutes(app._router.stack);
-
-
-// Start server
-// ---------------------------
-
+// Port
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`🚀 Server started on port ${PORT}`);
+  console.log(`✅ Server running on port ${PORT}`);
 });

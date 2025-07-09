@@ -1,9 +1,10 @@
+// src/components/Basket.jsx
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import Footer from './Footer';
 import Navbar from './Navbar';
 import { useCart } from "./context/CartContext";
-import { getImageUrl } from "../utils/imageHelper"; // ✅ image helper
+import API_BASE_URL from "../config"; // Added: Import API_BASE_URL
 
 const Basket = () => {
   const navigate = useNavigate();
@@ -11,6 +12,11 @@ const Basket = () => {
 
   const subtotal = getCartTotalPrice();
   const total = subtotal;
+
+  console.log("Basket component: Current cart state:", cart);
+  console.log("Basket component: Calculated subtotal:", subtotal, "Type:", typeof subtotal);
+  console.log("Basket component: Calculated total:", total, "Type:", typeof total);
+
 
   if (cart.length === 0)
     return (
@@ -30,6 +36,7 @@ const Basket = () => {
       <div className="flex flex-col md:flex-row gap-5 w-full max-w-5xl px-5 py-10 items-start">
         {/* Left Column: Shopping Cart Items */}
         <div className="flex flex-col gap-5 flex-grow md:w-2/3 w-full">
+          {/* Continue Shopping */}
           <div
             className="text-blue-500 text-base font-medium mb-2 cursor-pointer self-start"
             onClick={() => navigate("/")}
@@ -51,7 +58,15 @@ const Basket = () => {
             >
               <div className="w-20 h-20 bg-[#1a1d22] rounded-md flex items-center justify-center flex-shrink-0 overflow-hidden">
                 <img
-                  src={getImageUrl(item.img)} // ✅ replaced
+                  src={
+                    item.img
+                      ? `${API_BASE_URL}${ // Changed to API_BASE_URL
+                          item.img.startsWith("/images")
+                            ? item.img
+                            : "/images/" + item.img
+                        }`
+                      : "/images/default_image.png"
+                  }
                   alt={item.name}
                   className="w-4/5 h-4/5 object-contain"
                 />
@@ -89,21 +104,26 @@ const Basket = () => {
 
                 <div className="font-bold text-lg text-[#e0e0e0] min-w-20 text-right">
                   {(() => {
+                    console.log("Basket item details:", item);
+                    console.log("  item.price:", item.price, "type:", typeof item.price);
+                    console.log("  item.quantity:", item.quantity, "type:", typeof item.quantity);
+
                     const parsedPrice = parseFloat(item.price);
-                    const parsedQuantity = parseInt(item.quantity);
+                    const parsedQuantity = parseInt(item.quantity); // Use parseInt for quantity, parseFloat for price
 
                     if (isNaN(parsedPrice) || isNaN(parsedQuantity)) {
-                      return "TND N/A";
+                        console.warn("WARN: Invalid price or quantity for basket item:", item);
+                        return "TND N/A";
                     }
                     const calculatedPrice = parsedPrice * parsedQuantity;
                     return `TND${calculatedPrice.toFixed(2)}`;
                   })()}
                 </div>
                 <button
-                  onClick={() => removeFromCart(item.cartItemId)}
-                  className="bg-red-600 text-white border-none rounded px-2.5 py-1.5 cursor-pointer text-xs ml-2"
+                    onClick={() => removeFromCart(item.cartItemId)}
+                    className="bg-red-600 text-white border-none rounded px-2.5 py-1.5 cursor-pointer text-xs ml-2"
                 >
-                  Remove
+                    Remove
                 </button>
               </div>
             </div>
@@ -120,8 +140,12 @@ const Basket = () => {
             <span className="text-sm text-gray-400">Subtotal</span>
             <span className="font-semibold text-base">
               {(() => {
+                console.log("Subtotal value:", subtotal, "type:", typeof subtotal);
                 const parsedSubtotal = parseFloat(subtotal);
-                if (isNaN(parsedSubtotal)) return "TND N/A";
+                if (isNaN(parsedSubtotal)) {
+                  console.warn("WARN: Subtotal is not a valid number:", subtotal);
+                  return "TND N/A";
+                }
                 return `TND${parsedSubtotal.toFixed(2)}`;
               })()}
             </span>
@@ -131,8 +155,12 @@ const Basket = () => {
             <span className="font-bold text-lg">Total</span>
             <span className="font-bold text-lg">
               {(() => {
+                console.log("Total value:", total, "type:", typeof total);
                 const parsedTotal = parseFloat(total);
-                if (isNaN(parsedTotal)) return "TND N/A";
+                if (isNaN(parsedTotal)) {
+                  console.warn("WARN: Total is not a valid number:", total);
+                  return "TND N/A";
+                }
                 return `TND${parsedTotal.toFixed(2)}`;
               })()}
             </span>

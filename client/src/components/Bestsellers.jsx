@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import API_BASE_URL from "../config";
-import { getImageUrl } from "../utils/imageHelper"; // 👈 import helper
 
 export default function Bestsellers() {
   const [products, setProducts] = useState([]);
@@ -32,7 +31,13 @@ export default function Bestsellers() {
             >
               <div className="aspect-square flex justify-center items-center overflow-hidden mb-3">
                 <img
-                  src={getImageUrl(product.img)}
+                  src={
+                    product.img
+                      ? `${API_BASE_URL}${
+                          product.img.startsWith("/images") ? product.img : "/images/" + product.img
+                        }`
+                      : "/images/default_image.png"
+                  }
                   alt={product.name}
                   className="object-contain w-full h-full"
                 />
@@ -54,7 +59,13 @@ export default function Bestsellers() {
             >
               <div className="aspect-square flex justify-center items-center overflow-hidden mb-3">
                 <img
-                  src={getImageUrl(product.img)}
+                  src={
+                    product.img
+                      ? `${API_BASE_URL}${
+                          product.img.startsWith("/images") ? product.img : "/images/" + product.img
+                        }`
+                      : "/images/default_image.png"
+                  }
                   alt={product.name}
                   className="object-contain w-full h-full"
                 />
