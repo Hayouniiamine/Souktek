@@ -4,40 +4,51 @@ import API_BASE_URL from '../config';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
+
+  // State for orders
   const [allOrders, setAllOrders] = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
   const [errorOrders, setErrorOrders] = useState(null);
 
+  // State for product statistics, aligned with your new API routes
   const [totalProducts, setTotalProducts] = useState(0);
   const [averagePrice, setAveragePrice] = useState(0);
-  const [mostExpensive, setMostExpensive] = useState({ name: 'N/A', price: 0 });
+  const [mostExpensive, setMostExpensive] = useState({ name: 'N/A', price: '0' });
   const [mostPopular, setMostPopular] = useState({ name: 'N/A', sold: 0 });
   const [loadingStats, setLoadingStats] = useState(true);
   const [errorStats, setErrorStats] = useState(null);
 
+  // This useEffect combines authentication checks and data fetching from your latest draft
   useEffect(() => {
     const userData = JSON.parse(localStorage.getItem('user'));
     const token = localStorage.getItem('token');
     const adminSecretVerified = localStorage.getItem('adminSecretVerified');
 
+    // 1. Check if user is logged in and is an admin
     if (!userData || !token || !userData.is_admin) {
-      console.log("AdminDashboard: Not logged in as admin or token missing. Redirecting...");
+      console.log("AdminDashboard: Not logged in as admin or token missing. Redirecting.");
       navigate('/login');
       return;
     }
 
-    if (!adminSecretVerified) {
-      console.log("AdminDashboard: Admin secret not verified. Redirecting to secret verification.");
+    // 2. Check if admin secret key has been verified
+    if (adminSecretVerified !== "true") {
+      console.log("AdminDashboard: Admin secret not verified. Redirecting.");
       navigate('/secret-key-verification');
       return;
     }
 
-    const headers = { 'Authorization': `Bearer ${token}` };
+    const headers = { "Authorization": `Bearer ${token}` };
 
+    // --- Fetch all orders ---
     const fetchOrders = async () => {
       try {
+        setLoadingOrders(true);
         const response = await fetch(`${API_BASE_URL}/api/orders/all`, { headers });
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        }
         const data = await response.json();
         setAllOrders(data);
       } catch (error) {
@@ -48,69 +59,42 @@ const AdminDashboard = () => {
       }
     };
 
-    const fetchTotalProducts = async () => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/products/total-count`, { headers });
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        const data = await response.json();
-        setTotalProducts(data.total_products);
-      } catch (error) {
-        setErrorStats(error.message);
-        console.error("Error fetching total products:", error);
-      }
-    };
-
-    const fetchAveragePrice = async () => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/products/average-price`, { headers });
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        const data = await response.json();
-        setAveragePrice(parseFloat(data.average_price));
-      } catch (error) {
-        setErrorStats(error.message);
-        console.error("Error fetching average price:", error);
-      }
-    };
-
-    const fetchMostExpensive = async () => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/products/most-expensive`, { headers });
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        const data = await response.json();
-        setMostExpensive({
-          name: data.name || 'N/A',
-          price: data.price === 'N/A' ? 0 : parseFloat(data.price),
-        });
-      } catch (error) {
-        setErrorStats(error.message);
-        console.error("Error fetching most expensive product:", error);
-      }
-    };
-
-    const fetchMostPopular = async () => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/products/most-popular`, { headers });
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        const data = await response.json();
-        setMostPopular({
-          name: data.name || 'N/A',
-          sold: parseInt(data.sold, 10) || 0,
-        });
-      } catch (error) {
-        setErrorStats(error.message);
-        console.error("Error fetching most popular product:", error);
-      }
-    };
-
+    // --- Fetch all product statistics in parallel ---
     const fetchAllStats = async () => {
-      await Promise.all([
-        fetchTotalProducts(),
-        fetchAveragePrice(),
-        fetchMostExpensive(),
-        fetchMostPopular()
-      ]);
-      setLoadingStats(false);
+        setLoadingStats(true);
+        try {
+            const [totalRes, avgRes, expensiveRes, popularRes] = await Promise.all([
+                fetch(`${API_BASE_URL}/api/products/total-count`, { headers }),
+                fetch(`${API_BASE_URL}/api/products/average-price`, { headers }),
+                fetch(`${API_BASE_URL}/api/products/most-expensive`, { headers }),
+                fetch(`${API_BASE_URL}/api/products/most-popular`, { headers })
+            ]);
+
+            // Process responses
+            const totalData = await totalRes.json();
+            if (totalRes.ok) setTotalProducts(totalData.total_products || 0);
+            else console.error("Failed to fetch total products:", totalData.message);
+
+            const avgData = await avgRes.json();
+            if (avgRes.ok) setAveragePrice(parseFloat(avgData.average_price) || 0);
+            else console.error("Failed to fetch average price:", avgData.message);
+
+            const expensiveData = await expensiveRes.json();
+            if (expensiveRes.ok) setMostExpensive(expensiveData);
+            else console.error("Failed to fetch most expensive product:", expensiveData.message);
+
+            const popularData = await popularRes.json();
+            if (popularRes.ok) setMostPopular(popularData);
+            else console.error("Failed to fetch most popular product:", popularData.message);
+
+        } catch (error) {
+            setErrorStats("Network error or server unreachable for statistics.");
+            console.error("Error fetching product stats:", error);
+        } finally {
+            setLoadingStats(false);
+        }
     };
+
 
     fetchOrders();
     fetchAllStats();
@@ -124,120 +108,141 @@ const AdminDashboard = () => {
     navigate('/login');
   };
 
-  if (loadingOrders || loadingStats) {
-    return (
-      <div className="min-h-screen bg-gray-800 flex justify-center items-center text-white text-xl">
-        Loading Admin Dashboard...
-      </div>
-    );
-  }
+  // Helper to safely format price
+  const formatPrice = (price) => {
+    const num = parseFloat(price);
+    return isNaN(num) ? '0.00' : num.toFixed(2);
+  };
 
-  if (errorOrders || errorStats) {
-    return (
-      <div className="min-h-screen bg-gray-800 flex justify-center items-center text-red-500 text-xl">
-        Error loading data: {errorOrders || errorStats}
-      </div>
-    );
-  }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-8">
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-4xl font-bold mb-8 text-center">Admin Dashboard</h1>
+    <div className="min-h-screen bg-gray-100 flex">
+      {/* Sidebar from the original design */}
+      <div className="w-64 bg-blue-900 text-white p-6 flex flex-col">
+        <h2 className="text-3xl font-semibold text-center text-white mb-10">
+          Admin Panel
+        </h2>
 
-        {/* Admin Actions Section */}
-        <div className="bg-gray-800 p-6 rounded-lg shadow-xl mb-12">
-          <h2 className="text-3xl font-semibold mb-6 text-center text-blue-400">Admin Actions</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Link
-              to="/admin/create-product"
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-lg text-center transition duration-300 transform hover:scale-105"
-            >
+        <ul className="space-y-4 flex-grow">
+          <li>
+            <Link to="/admin-dashboard" className="block py-2 px-4 text-lg hover:bg-blue-700 rounded-md transition duration-300">
+              Dashboard
+            </Link>
+          </li>
+          <li>
+            <Link to="/admin/create-product" className="block py-2 px-4 text-lg hover:bg-blue-700 rounded-md transition duration-300">
               Create Product
             </Link>
-            <Link
-              to="/admin/update-product"
-              className="bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-lg text-center transition duration-300 transform hover:scale-105"
-            >
+          </li>
+          <li>
+            <Link to="/admin/read-products" className="block py-2 px-4 text-lg hover:bg-blue-700 rounded-md transition duration-300">
+              View Products
+            </Link>
+          </li>
+          <li>
+            <Link to="/admin/update-product" className="block py-2 px-4 text-lg hover:bg-blue-700 rounded-md transition duration-300">
               Update Product
             </Link>
-            <Link
-              to="/admin/delete-product"
-              className="bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-6 rounded-lg text-center transition duration-300 transform hover:scale-105"
-            >
+          </li>
+          <li>
+            <Link to="/admin/delete-product" className="block py-2 px-4 text-lg hover:bg-blue-700 rounded-md transition duration-300">
               Delete Product
             </Link>
-          </div>
+          </li>
+        </ul>
+
+        {/* Logout Button at the bottom of the sidebar */}
+        <div>
+            <button
+                onClick={handleLogout}
+                className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300"
+            >
+                Logout
+            </button>
+        </div>
+      </div>
+
+      {/* Main Content Area */}
+      <div className="flex-1 p-8 bg-gray-50 overflow-y-auto">
+        <div className="mb-10 text-center">
+          <h1 className="text-3xl font-bold text-gray-700">Welcome, Admin 👋</h1>
+          <p className="text-lg text-gray-600">
+            Manage your store, view analytics, and monitor performance.
+          </p>
         </div>
 
-        {/* Product Statistics Section */}
-        <div className="bg-gray-800 p-6 rounded-lg shadow-xl mb-12">
-          <h2 className="text-3xl font-semibold mb-6 text-center text-purple-400">Product Statistics</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-center">
-            <div className="bg-gray-700 p-4 rounded-lg shadow">
-              <p className="text-gray-400">Total Products</p>
-              <p className="text-3xl font-bold text-indigo-300">{totalProducts}</p>
-            </div>
-            <div className="bg-gray-700 p-4 rounded-lg shadow">
-              <p className="text-gray-400">Average Price</p>
-              <p className="text-3xl font-bold text-green-300">
-                ${typeof averagePrice === 'number' && !isNaN(averagePrice) ? averagePrice.toFixed(2) : '0.00'}
-              </p>
-            </div>
-            <div className="bg-gray-700 p-4 rounded-lg shadow">
-              <p className="text-gray-400">Most Expensive</p>
-              <p className="text-xl font-bold text-red-300">{mostExpensive.name}</p>
-              <p className="text-lg text-red-300">
-                (${typeof mostExpensive.price === 'number' ? mostExpensive.price.toFixed(2) : '0.00'})
-              </p>
-            </div>
-            <div className="bg-gray-700 p-4 rounded-lg shadow">
-              <p className="text-gray-400">Most Popular</p>
-              <p className="text-xl font-bold text-teal-300">{mostPopular.name}</p>
-              <p className="text-lg text-teal-300">(Sold: {mostPopular.sold})</p>
-            </div>
-          </div>
+        {/* Product Stats Section with original UI and new data */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+          {loadingStats ? (
+            <div className="col-span-full text-center text-gray-600">Loading product statistics...</div>
+          ) : errorStats ? (
+            <div className="col-span-full text-center text-red-600">Error: {errorStats}</div>
+          ) : (
+            <>
+              <div className="bg-blue-100 p-6 rounded-lg shadow">
+                <h3 className="text-lg font-semibold text-blue-800 mb-2">Total Products</h3>
+                <p className="text-3xl font-bold">{totalProducts}</p>
+              </div>
+
+              <div className="bg-green-100 p-6 rounded-lg shadow">
+                <h3 className="text-lg font-semibold text-green-800 mb-2">Average Price</h3>
+                <p className="text-3xl font-bold">${formatPrice(averagePrice)}</p>
+              </div>
+
+              <div className="bg-red-100 p-6 rounded-lg shadow">
+                <h3 className="text-lg font-semibold text-red-800 mb-2">Most Expensive</h3>
+                <p className="text-md truncate">{mostExpensive.name || 'N/A'}</p>
+                <p className="text-xl font-bold">${formatPrice(mostExpensive.price)}</p>
+              </div>
+
+              <div className="bg-purple-100 p-6 rounded-lg shadow">
+                <h3 className="text-lg font-semibold text-purple-800 mb-2">Most Popular</h3>
+                <p className="text-md truncate">{mostPopular.name || 'N/A'}</p>
+                <p className="text-xl font-bold">{mostPopular.sold || 0} sold</p>
+              </div>
+            </>
+          )}
         </div>
 
-        {/* All Orders Section */}
-        <div className="bg-gray-800 p-6 rounded-lg shadow-xl mb-8">
-          <h2 className="text-3xl font-semibold mb-6 text-center text-blue-400">All Orders</h2>
-          <div className="overflow-x-auto rounded-lg shadow">
-            <table className="min-w-full leading-normal">
-              <thead>
-                <tr className="bg-gray-700 text-gray-300 uppercase text-sm">
-                  <th className="py-3 px-6 border-b border-gray-200">Order ID</th>
-                  <th className="py-3 px-6 border-b border-gray-200">Product Name</th>
-                  <th className="py-3 px-6 border-b border-gray-200">Customer Email</th>
-                  <th className="py-3 px-6 border-b border-gray-200">Payment Method</th>
-                  <th className="py-3 px-6 border-b border-gray-200">Order Time</th>
-                  <th className="py-3 px-6 border-b border-gray-200">User ID</th>
-                </tr>
-              </thead>
-              <tbody className="text-gray-700 text-sm">
-                {allOrders.map((order) => (
-                  <tr key={order.id} className="border-b border-gray-200 hover:bg-gray-50">
-                    <td className="py-3 px-6 whitespace-nowrap">{order.id}</td>
-                    <td className="py-3 px-6">{order.product_name}</td>
-                    <td className="py-3 px-6">{order.email}</td>
-                    <td className="py-3 px-6">{order.payment_method}</td>
-                    <td className="py-3 px-6">{new Date(order.order_time).toLocaleString()}</td>
-                    <td className="py-3 px-6">{order.user_id}</td>
+        {/* All Orders History Table */}
+        <div className="bg-white p-6 rounded-lg shadow">
+          <h3 className="text-2xl font-semibold text-gray-800 mb-6">All Orders History</h3>
+          {loadingOrders ? (
+            <div className="text-center text-gray-600">Loading orders...</div>
+          ) : errorOrders ? (
+            <div className="text-center text-red-600">Error: {errorOrders}</div>
+          ) : allOrders.length === 0 ? (
+            <div className="text-center text-gray-600">No orders found in the system.</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full bg-white border border-gray-200 rounded-lg">
+                <thead>
+                  <tr className="bg-gray-100 text-left text-gray-600 uppercase text-sm leading-normal">
+                    <th className="py-3 px-6 border-b border-gray-200">Order ID</th>
+                    <th className="py-3 px-6 border-b border-gray-200">Product Name</th>
+                    <th className="py-3 px-6 border-b border-gray-200">Customer Email</th>
+                    <th className="py-3 px-6 border-b border-gray-200">Payment Method</th>
+                    <th className="py-3 px-6 border-b border-gray-200">Order Time</th>
+                    <th className="py-3 px-6 border-b border-gray-200">User ID</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Logout Button */}
-        <div className="text-center mt-8">
-          <button
-            onClick={handleLogout}
-            className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-8 rounded-lg transition duration-300"
-          >
-            Logout
-          </button>
+                </thead>
+                <tbody className="text-gray-700 text-sm">
+                  {allOrders.map((order) => (
+                    <tr key={order.id} className="border-b border-gray-200 hover:bg-gray-50">
+                      <td className="py-3 px-6 whitespace-nowrap">{order.id}</td>
+                      <td className="py-3 px-6">{order.product_name}</td>
+                      <td className="py-3 px-6">{order.email}</td>
+                      <td className="py-3 px-6">{order.payment_method}</td>
+                      <td className="py-3 px-6">
+                        {new Date(order.order_time).toLocaleString()}
+                      </td>
+                      <td className="py-3 px-6">{order.user_id}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
     </div>
