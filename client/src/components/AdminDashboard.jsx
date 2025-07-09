@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import API_BASE_URL  from '../config';
+import API_BASE_URL from '../config';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -13,7 +13,6 @@ const AdminDashboard = () => {
   const [totalProducts, setTotalProducts] = useState(0);
   const [averagePrice, setAveragePrice] = useState(0);
   const [mostExpensive, setMostExpensive] = useState({ name: 'N/A', price: 0 });
-  const [lowestStock, setLowestStock] = useState({ name: 'N/A', stock: 0 });
   const [mostPopular, setMostPopular] = useState({ name: 'N/A', sold: 0 });
   const [loadingStats, setLoadingStats] = useState(true);
   const [errorStats, setErrorStats] = useState(null);
@@ -103,22 +102,6 @@ const AdminDashboard = () => {
       }
     };
 
-    const fetchLowestStock = async () => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/products/lowest-stock`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        const data = await response.json();
-        setLowestStock(data);
-      } catch (error) {
-        setErrorStats(error.message);
-        console.error("Error fetching lowest stock product:", error);
-      }
-    };
-
     const fetchMostPopular = async () => {
       try {
         const response = await fetch(`${API_BASE_URL}/api/products/most-popular`, {
@@ -140,7 +123,6 @@ const AdminDashboard = () => {
         fetchTotalProducts(),
         fetchAveragePrice(),
         fetchMostExpensive(),
-        fetchLowestStock(),
         fetchMostPopular()
       ]);
       setLoadingStats(false);
@@ -223,11 +205,6 @@ const AdminDashboard = () => {
               <p className="text-lg text-red-300">
                 (${typeof mostExpensive.price === 'number' ? mostExpensive.price.toFixed(2) : '0.00'})
               </p>
-            </div>
-            <div className="bg-gray-700 p-4 rounded-lg shadow">
-              <p className="text-gray-400">Lowest Stock</p>
-              <p className="text-xl font-bold text-yellow-300">{lowestStock.name}</p>
-              <p className="text-lg text-yellow-300">(Stock: {lowestStock.stock})</p>
             </div>
             <div className="bg-gray-700 p-4 rounded-lg shadow">
               <p className="text-gray-400">Most Popular</p>

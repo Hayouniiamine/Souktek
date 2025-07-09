@@ -173,16 +173,7 @@ app.get("/api/products/most-expensive", authorizeAdmin, async (req, res) => {
   }
 });
 
-// Get product with lowest stock
-app.get("/api/products/lowest-stock", authorizeAdmin, async (req, res) => {
-  try {
-    const result = await pool.query("SELECT name, stock FROM products ORDER BY stock ASC LIMIT 1");
-    res.json(result.rows[0] || { name: 'N/A', stock: 0 });
-  } catch (err) {
-    console.error("Error fetching lowest stock product:", err);
-    res.status(500).json({ message: "Failed to fetch lowest stock product" });
-  }
-});
+
 
 // Get most popular product (based on sold count)
 app.get("/api/products/most-popular", authorizeAdmin, async (req, res) => {
