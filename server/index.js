@@ -1,49 +1,52 @@
 const express = require("express");
 const cors = require("cors");
-const pool = require("./db"); // Assuming db.js connects to your PostgreSQL database
-const bcrypt = require("bcryptjs"); // Using bcryptjs for broader compatibility
+const pool = require("./db");
+const bcrypt = require("bcryptjs");
 const path = require("path");
 const multer = require("multer");
 const nodemailer = require("nodemailer");
 const jwt = require("jsonwebtoken");
+const fs = require("fs"); // Added for volume setup
 
 const app = express();
 
-// ---------------------------\
+// ---------------------------
 // Middleware Configuration
-// ---------------------------\
+// ---------------------------
 
-// Use environment variable for frontend URL in CORS for better deployment flexibility
 app.use(cors({
-  origin: process.env.FRONTEND_URL || '*', // Allow all origins if not specified (for dev/testing)
+  origin: process.env.FRONTEND_URL || '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 app.use(express.json());
 
-// Serve static React build files for the frontend application
+// Serve React build
 app.use(express.static(path.join(__dirname, "../client/build")));
 
-// Specifically serve image files from the public/images folder (used for Multer uploads)
+// Serve existing static images (unchanged)
 app.use(
   "/images",
   express.static(path.join(__dirname, "../client/public/images"))
 );
 
-// ---------------------------------------------------------------------------------------------------------------------------------------\
-// Multer Configuration (for Image Uploading)
-// ------------------------------------------------------------------------------------------------------------\
+// ---------------------------
+// Setup Persistent Volume Uploads
+// ---------------------------
 
+const uploadDir = "/mnt/volume/uploads";
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+app.use("/uploads", express.static(uploadDir));
+
+// Multer configuration (uploads now go to mounted volume)
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, "../client/public/images"));
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
-  },
+  destination: (req, file, cb) => cb(null, uploadDir),
+  filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname)),
 });
+const upload = multer({ storage });
 
-const upload = multer({ storage: storage });
 
 // ---------------------------------------------------------------------------------------------------------------------------------------\
 // Environment Variables and Constants
@@ -70,7 +73,7 @@ const ADMIN_NOTIFICATION_EMAIL = process.env.ADMIN_NOTIFICATION_EMAIL || 'soukte
 const sendOrderNotificationEmail = async (orderDetails) => {
   const {
     orderId,
-    products,           // Expecting an array of { product_name, quantity }
+    products,              // Expecting an array of { product_name, quantity }
     payment_method,
     email,
     phone,
@@ -283,7 +286,8 @@ app.get("/api/product_options/:productId", async (req, res) => {
 // Create a new product (ADMIN ONLY)
 app.post("/api/products", authorizeAdmin, upload.single("image"), async (req, res) => {
   const { name, price, description, type, options } = req.body;
-  const image = req.file ? req.file.filename : ''; // Use empty string instead of null
+  // CORRECTED: Use the full public path for the image
+  const image = req.file ? `/uploads/${req.file.filename}` : '';
 
   // Validate required fields
   if (!name || !price || !description || !type) {
@@ -401,7 +405,8 @@ app.put("/api/products/:id", authorizeAdmin, upload.single("image"), async (req,
     }
   }
 
-  const imageFile = req.file ? req.file.filename : null;
+  // CORRECTED: Use the full public path for the image file
+  const imageFile = req.file ? `/uploads/${req.file.filename}` : null;
   const client = await pool.connect();
 
   try {
@@ -681,9 +686,9 @@ app.post("/api/orders", async (req, res) => {
 
 
 
-// ---------------------------\
+// ---------------------------
 // USER AUTHENTICATION ROUTES
-// ---------------------------\
+// ---------------------------
 
 // Sign up a new user with hashed password
 app.post("/api/auth/signup", async (req, res) => { // Changed route to match deployed
@@ -826,7 +831,7 @@ app.use((req, res) => {
 // --- Quick DB-connect test on boot ---------------------------------
 pool.connect()
   .then(client => {
-    return client.query('SELECT NOW()')        // any light query is fine
+    return client.query('SELECT NOW()')      // any light query is fine
       .then(res => {
         console.log('✅  DB connected – current time:', res.rows[0].now);
         client.release();
@@ -834,7 +839,7 @@ pool.connect()
   })
   .catch(err => {
     console.error('❌  DB connection error:', err.message || err);
-    // optional: process.exit(1);   // crash app so Railway restarts until env is fixed
+    // optional: process.exit(1);    // crash app so Railway restarts until env is fixed
   });
 // -------------------------------------------------------------------
 
