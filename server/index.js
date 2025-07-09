@@ -599,8 +599,8 @@ app.get("/api/products/statistics", authorizeAdmin, async (req, res) => {
     });
 
   } catch (err) {
-    console.error("❌ Error fetching statistics:", err);
-    res.status(500).json({ message: "Failed to fetch product statistics" });
+    console.error("❌ Error fetching statisticss:", err);
+    res.status(500).json({ message: "Failed to fetch product statisticss" });
   }
 });
 
