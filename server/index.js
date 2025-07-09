@@ -380,9 +380,9 @@ app.delete("/api/products/:id", authorizeAdmin, async (req, res) => {
 //--------------------------------------------------------------------------------- Update product and all its options together (ADMIN ONLY)---------------------------------------------------------------------------------
 app.put("/api/products/:id", authorizeAdmin, upload.single("image"), async (req, res) => {
   const { id } = req.params;
-  const { name, price, description, type, options } = req.body; // Added type here
+  const { name, price, description, type, options } = req.body;
 
-  if (!name || price === undefined || !description || !type) { // Validate type now
+  if (!name || price === undefined || !description || !type) {
     return res.status(400).json({ message: "Name, price, description, and type are required" });
   }
 
@@ -425,7 +425,12 @@ app.put("/api/products/:id", authorizeAdmin, upload.single("image"), async (req,
     for (const opt of parsedOptions) {
       const { id: optionId, label, price: optionPrice, description: optionDesc } = opt;
 
-      if (optionId === undefined || label === undefined || optionPrice === undefined || optionDesc === undefined) {
+      if (
+        optionId === undefined ||
+        label === undefined ||
+        optionPrice === undefined ||
+        optionDesc === undefined
+      ) {
         await client.query("ROLLBACK");
         return res.status(400).json({
           message: "Each option must have id, label, price, and description",
@@ -434,8 +439,8 @@ app.put("/api/products/:id", authorizeAdmin, upload.single("image"), async (req,
 
       await client.query(
         `UPDATE product_options
-          SET label = $1, price = $2, description = $3
-          WHERE id = $4`,
+         SET label = $1, price = $2, description = $3
+         WHERE id = $4`,
         [label, optionPrice, optionDesc, optionId]
       );
     }
@@ -455,7 +460,8 @@ app.put("/api/products/:id", authorizeAdmin, upload.single("image"), async (req,
   }
 });
 
-// Update a single product option by its ID (ADMIN ONLY)
+
+//----------------------------- Update a single product option by its ID (ADMIN ONLY)-------------------------
 app.put("/api/product_options/:id", authorizeAdmin, async (req, res) => {
   const { id } = req.params;
   const { label, price, description } = req.body;
@@ -466,7 +472,10 @@ app.put("/api/product_options/:id", authorizeAdmin, async (req, res) => {
 
   try {
     const result = await pool.query(
-      `UPDATE product_options SET label = $1, price = $2, description = $3 WHERE id = $4 RETURNING *`,
+      `UPDATE product_options
+       SET label = $1, price = $2, description = $3
+       WHERE id = $4
+       RETURNING *`,
       [label, price, description, id]
     );
 
@@ -483,10 +492,34 @@ app.put("/api/product_options/:id", authorizeAdmin, async (req, res) => {
     res.status(500).json({ message: "Error updating product option" });
   }
 });
+// -------------Delete a Single Product Option ----------------------------------------------------\
 
-// ---------------------------\
+app.delete("/api/product_options/:id", authorizeAdmin, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const result = await pool.query(
+      "DELETE FROM product_options WHERE id = $1 RETURNING *",
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "Option not found" });
+    }
+
+    res.json({
+      message: "Option deleted successfully",
+      option: result.rows[0],
+    });
+  } catch (err) {
+    console.error("Error deleting product option:", err);
+    res.status(500).json({ message: "Error deleting product option" });
+  }
+});
+
+// --------------------------------------------------------------------------------------\
 // ORDERS ROUTES
-// ---------------------------\
+// -----------------------------------------------------------------------------------------------\
 
 // Route to fetch all orders for admin dashboard (ADMIN ONLY)
 app.get("/api/orders/all", authorizeAdmin, async (req, res) => {
