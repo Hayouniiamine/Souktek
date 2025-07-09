@@ -587,20 +587,20 @@ app.get("/api/products/statistics", authorizeAdmin, async (req, res) => {
 
     res.json({
       total_products: totalRes.rows[0].total_products,
-      average_price: avgRes.rows[0].average_price,
+      average_price: parseFloat(avgRes.rows[0].average_price) || 0,
       most_expensive_product: expensiveRes.rows[0] || { name: 'N/A', price: 0 },
       lowest_stock_product: lowStockRes.rows[0] || { name: 'N/A', stock: 0 },
       most_popular_product: popularRes.rows.length > 0
         ? {
             name: popularRes.rows[0].product_name,
-            sold: popularRes.rows[0].total_sold_count
+            sold: parseInt(popularRes.rows[0].total_sold_count, 10) || 0
           }
         : { name: 'N/A', sold: 0 }
     });
 
   } catch (err) {
-    console.error("❌ Error fetching statisticss:", err);
-    res.status(500).json({ message: "Failed to fetch product statisticss" });
+    console.error("❌ Error fetching statistics:", err);
+    res.status(500).json({ message: "Failed to fetch product statistics", error: err.message });
   }
 });
 
