@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import API_BASE_URL from '../config'; // Assuming config.js is in the parent directory
+import API_BASE_URL from '../config';
+import { getImageUrl } from '../utils/imageHelper'; // ✅ Added
 
 const DeleteProduct = () => {
   const navigate = useNavigate();
@@ -90,16 +91,9 @@ const DeleteProduct = () => {
                 className="bg-white rounded-2xl shadow-md overflow-hidden flex flex-col"
               >
                 <div className="w-full h-40 flex items-center justify-center bg-gray-200">
+                  {/* ✅ Replaced with helper */}
                   <img
-                    src={
-                      product.img
-                        ? `${API_BASE_URL}${
-                            product.img.startsWith("/images")
-                              ? product.img
-                              : "/images/" + product.img
-                          }`
-                        : "/images/default_image.png"
-                    }
+                    src={getImageUrl(product.img)}
                     alt={product.name}
                     className="max-h-32 object-contain"
                   />

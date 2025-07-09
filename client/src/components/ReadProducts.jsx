@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import API_BASE_URL from '../config';
+import { getImageUrl } from '../utils/imageHelper'; // ✅ added
 
 const ReadProducts = () => {
   const [products, setProducts] = useState([]);
@@ -13,7 +14,6 @@ const ReadProducts = () => {
         const data = await response.json();
         setProducts(data);
 
-        // Extract unique product types from fetched data, ignoring falsy values
         const uniqueTypes = Array.from(new Set(data.map((p) => p.type))).filter(Boolean);
         setTypes(uniqueTypes);
       } catch (error) {
@@ -23,7 +23,6 @@ const ReadProducts = () => {
     fetchProducts();
   }, []);
 
-  // Filter products by selected type; show all if filterType is 'all'
   const filteredProducts =
     filterType === 'all'
       ? products
@@ -63,16 +62,9 @@ const ReadProducts = () => {
                 className="bg-white rounded-2xl shadow-md overflow-hidden flex flex-col"
               >
                 <div className="w-full h-40 flex items-center justify-center bg-gray-200">
+                  {/* ✅ Replaced image logic with helper */}
                   <img
-                    src={
-                      product.img
-                        ? `${API_BASE_URL}${
-                            product.img.startsWith('/images')
-                              ? product.img
-                              : '/images/' + product.img
-                          }`
-                        : '/images/default_image.png'
-                    }
+                    src={getImageUrl(product.img)}
                     alt={product.name}
                     className="max-h-32 object-contain"
                   />

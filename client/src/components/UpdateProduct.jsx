@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API_BASE_URL from '../config';
+import { getImageUrl } from '../utils/imageHelper'; // ✅ Import helper
 
 const UpdateProduct = () => {
   const [products, setProducts] = useState([]);
@@ -73,18 +74,10 @@ const UpdateProduct = () => {
               key={product.id}
               className="bg-white rounded-2xl shadow-md overflow-hidden flex flex-col p-4"
             >
-              {/* Image */}
+              {/* ✅ Use getImageUrl for image rendering */}
               <div className="flex justify-center bg-gray-200 p-4 rounded mb-4">
                 <img
-                  src={
-                    product.img
-                      ? `${API_BASE_URL}${
-                          product.img.startsWith("/images")
-                            ? product.img
-                            : "/images/" + product.img
-                        }`
-                      : "/images/default_image.png"
-                  }
+                  src={getImageUrl(product.img)}
                   alt={product.name}
                   className="max-h-40 object-contain"
                 />
