@@ -30,9 +30,9 @@ app.use(
   express.static(path.join(__dirname, "../client/public/images"))
 );
 
-// ---------------------------\
+// ---------------------------------------------------------------------------------------------------------------------------------------\
 // Multer Configuration (for Image Uploading)
-// ---------------------------\
+// ------------------------------------------------------------------------------------------------------------\
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -45,17 +45,17 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-// ---------------------------\
+// ---------------------------------------------------------------------------------------------------------------------------------------\
 // Environment Variables and Constants
-// ---------------------------\
+// ---------------------------------------------------------------------------------------------------------------------------------------\
 
 // IMPORTANT: These should be set as environment variables in your deployment environment
 const JWT_SECRET = process.env.JWT_SECRET;
 const adminSecretKey = process.env.ADMIN_SECRET_KEY;
 
-// ---------------------------\
+// ------------------------------------------------------------------------------------------------------------------------------------------------------------------\
 // Nodemailer Configuration
-// ---------------------------\
+// ---------------------------------------------------------------------------------------------------------------------------------------\
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',
@@ -104,9 +104,9 @@ const sendOrderNotificationEmail = async (orderDetails) => {
   }
 };
 
-// ---------------------------\
+// ---------------------------------------------------------------------------------\
 // JWT Authentication Middleware
-// ---------------------------\
+// ------------------------------------------------------------------------------------------------------------\
 
 // Middleware to verify JWT token
 const verifyToken = (req, res, next) => {
@@ -130,7 +130,7 @@ const verifyToken = (req, res, next) => {
   });
 };
 
-// Middleware to authorize admin access (uses verifyToken first)
+// ------------------------------------------------------Middleware to authorize admin access (uses verifyToken first)-------------------------------------------------------
 const authorizeAdmin = (req, res, next) => {
   verifyToken(req, res, () => { // Call verifyToken first
     if (req.user && req.user.is_admin) {
@@ -140,7 +140,7 @@ const authorizeAdmin = (req, res, next) => {
     }
   });
 };
-// Get total number of products
+// ------------------------------------------------------Get total number of products---------------------------------------------------------------------------------
 app.get("/api/products/total-count", authorizeAdmin, async (req, res) => {
   try {
     const result = await pool.query("SELECT COUNT(id) AS total_products FROM products");
@@ -151,7 +151,7 @@ app.get("/api/products/total-count", authorizeAdmin, async (req, res) => {
   }
 });
 
-// Get average product price
+// ------------------------------------------------------------------------------------------------------------Get average product price------------------------------------------------------
 app.get("/api/products/average-price", authorizeAdmin, async (req, res) => {
   try {
     const result = await pool.query(`
@@ -172,7 +172,7 @@ app.get("/api/products/average-price", authorizeAdmin, async (req, res) => {
 
 
 
-// Get most expensive product
+// ------------------------------------------------------Get most expensive product---------------------------------------------------------------------------------
 app.get("/api/products/most-expensive", authorizeAdmin, async (req, res) => {
   try {
     const result = await pool.query("SELECT name, price FROM products ORDER BY price DESC LIMIT 1");
@@ -185,7 +185,7 @@ app.get("/api/products/most-expensive", authorizeAdmin, async (req, res) => {
 
 
 
-// Get most popular product (based on sold count)
+//------------------------------------------------------Get most popular product (based on sold count)------------------------------------------------------
 app.get("/api/products/most-popular", authorizeAdmin, async (req, res) => {
   try {
     const result = await pool.query(`
@@ -206,9 +206,9 @@ app.get("/api/products/most-popular", authorizeAdmin, async (req, res) => {
 });
 
 
-// ---------------------------\
+// ------------------------------------------------------------------------------------------------------------------------------------------------------------------\
 // PRODUCT & OPTION ROUTES
-// ---------------------------\
+// ------------------------------------------------------------------------------------------------------------------------------------------------------------------\
 
 // Get a single product by name
 app.get("/api/products/name/:name", async (req, res) => {
@@ -273,6 +273,8 @@ app.get("/api/product_options/:productId", async (req, res) => {
     res.status(500).json({ message: "Error fetching product options" });
   }
 });
+// -----------------------------------------------------------------------------------------------------------------------------------------------------
+
 // Create a new product (ADMIN ONLY)
 app.post("/api/products", authorizeAdmin, upload.single("image"), async (req, res) => {
   const { name, price, description, type, options } = req.body;
@@ -351,9 +353,9 @@ app.post("/api/products", authorizeAdmin, upload.single("image"), async (req, re
     client.release();
   }
 });
+// -----------------------------------------------------------------------------------------------------------------------------------------------------
 
-
-// Delete a product by ID (ADMIN ONLY)
+//-------------------------------Delete a product by ID (ADMIN ONLY)------------------------------------------------------------------------------------
 app.delete("/api/products/:id", authorizeAdmin, async (req, res) => {
   const { id } = req.params;
 
@@ -375,7 +377,7 @@ app.delete("/api/products/:id", authorizeAdmin, async (req, res) => {
   }
 });
 
-// Update product and all its options together (ADMIN ONLY)
+//--------------------------------------------------------------------------------- Update product and all its options together (ADMIN ONLY)---------------------------------------------------------------------------------
 app.put("/api/products/:id", authorizeAdmin, upload.single("image"), async (req, res) => {
   const { id } = req.params;
   const { name, price, description, type, options } = req.body; // Added type here
