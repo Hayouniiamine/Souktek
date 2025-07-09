@@ -1,5 +1,3 @@
-// src/AdminDashboard.jsx
-
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import API_BASE_URL from '../config';
@@ -34,16 +32,12 @@ const AdminDashboard = () => {
       return;
     }
 
+    const headers = { 'Authorization': `Bearer ${token}` };
+
     const fetchOrders = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/orders/all`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        const response = await fetch(`${API_BASE_URL}/api/orders/all`, { headers });
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
         setAllOrders(data);
       } catch (error) {
@@ -56,11 +50,7 @@ const AdminDashboard = () => {
 
     const fetchTotalProducts = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/products/total-count`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        const response = await fetch(`${API_BASE_URL}/api/products/total-count`, { headers });
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
         setTotalProducts(data.total_products);
@@ -72,14 +62,10 @@ const AdminDashboard = () => {
 
     const fetchAveragePrice = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/products/average-price`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        const response = await fetch(`${API_BASE_URL}/api/products/average-price`, { headers });
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
-        setAveragePrice(data.average_price);
+        setAveragePrice(parseFloat(data.average_price));
       } catch (error) {
         setErrorStats(error.message);
         console.error("Error fetching average price:", error);
@@ -88,14 +74,13 @@ const AdminDashboard = () => {
 
     const fetchMostExpensive = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/products/most-expensive`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        const response = await fetch(`${API_BASE_URL}/api/products/most-expensive`, { headers });
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
-        setMostExpensive(data);
+        setMostExpensive({
+          name: data.name || 'N/A',
+          price: data.price === 'N/A' ? 0 : parseFloat(data.price),
+        });
       } catch (error) {
         setErrorStats(error.message);
         console.error("Error fetching most expensive product:", error);
@@ -104,14 +89,13 @@ const AdminDashboard = () => {
 
     const fetchMostPopular = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/products/most-popular`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        const response = await fetch(`${API_BASE_URL}/api/products/most-popular`, { headers });
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
-        setMostPopular(data);
+        setMostPopular({
+          name: data.name || 'N/A',
+          sold: parseInt(data.sold, 10) || 0,
+        });
       } catch (error) {
         setErrorStats(error.message);
         console.error("Error fetching most popular product:", error);
@@ -130,6 +114,7 @@ const AdminDashboard = () => {
 
     fetchOrders();
     fetchAllStats();
+
   }, [navigate]);
 
   const handleLogout = () => {
@@ -196,7 +181,7 @@ const AdminDashboard = () => {
             <div className="bg-gray-700 p-4 rounded-lg shadow">
               <p className="text-gray-400">Average Price</p>
               <p className="text-3xl font-bold text-green-300">
-                ${typeof averagePrice === 'number' ? averagePrice.toFixed(2) : '0.00'}
+                ${typeof averagePrice === 'number' && !isNaN(averagePrice) ? averagePrice.toFixed(2) : '0.00'}
               </p>
             </div>
             <div className="bg-gray-700 p-4 rounded-lg shadow">
@@ -236,9 +221,7 @@ const AdminDashboard = () => {
                     <td className="py-3 px-6">{order.product_name}</td>
                     <td className="py-3 px-6">{order.email}</td>
                     <td className="py-3 px-6">{order.payment_method}</td>
-                    <td className="py-3 px-6">
-                      {new Date(order.order_time).toLocaleString()}
-                    </td>
+                    <td className="py-3 px-6">{new Date(order.order_time).toLocaleString()}</td>
                     <td className="py-3 px-6">{order.user_id}</td>
                   </tr>
                 ))}
