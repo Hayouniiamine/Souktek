@@ -180,7 +180,10 @@ app.get("/api/products/most-expensive", authorizeAdmin, async (req, res) => {
       FROM products
       ORDER BY 
         CAST(
-          regexp_replace(split_part(price, ' - ', 2), '[^0-9.]', '', 'g')
+          regexp_replace(
+            NULLIF(split_part(price, ' - ', 2), '')::text, 
+            '[^0-9.]', '', 'g'
+          )
           AS numeric
         ) DESC
       LIMIT 1
@@ -191,6 +194,7 @@ app.get("/api/products/most-expensive", authorizeAdmin, async (req, res) => {
     res.status(500).json({ message: "Failed to fetch most expensive product" });
   }
 });
+
 
 
 
