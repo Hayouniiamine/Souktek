@@ -154,13 +154,14 @@ app.get("/api/products/total-count", authorizeAdmin, async (req, res) => {
 // Get average product price
 app.get("/api/products/average-price", authorizeAdmin, async (req, res) => {
   try {
-    const result = await pool.query("SELECT AVG(price) AS average_price FROM products");
+    const result = await pool.query("SELECT AVG(price::numeric) AS average_price FROM products");
     res.json({ average_price: parseFloat(result.rows[0].average_price) || 0 });
   } catch (err) {
     console.error("Error fetching average price:", err);
     res.status(500).json({ message: "Failed to fetch average price" });
   }
 });
+
 
 // Get most expensive product
 app.get("/api/products/most-expensive", authorizeAdmin, async (req, res) => {
