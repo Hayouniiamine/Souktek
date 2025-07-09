@@ -140,7 +140,7 @@ const authorizeAdmin = (req, res, next) => {
     }
   });
 };
-// ------------------------------------------------------Get total number of products---------------------------------------------------------------------------------
+// --------------------------------------------------------Total product count------------------------------------------------------------------------------------
 app.get("/api/products/total-count", authorizeAdmin, async (req, res) => {
   try {
     const result = await pool.query("SELECT COUNT(id) AS total_products FROM products");
@@ -151,41 +151,32 @@ app.get("/api/products/total-count", authorizeAdmin, async (req, res) => {
   }
 });
 
-// ------------------------------------------------------------------------------------------------------------Get average product price------------------------------------------------------
-app.get("/api/products/average-price", authorizeAdmin, async (req, res) => {
+// --------------------------------------------------------Total income (TND)--------------------------------------------------------
+app.get("/api/products/total-income", authorizeAdmin, async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT AVG(
-        CAST(
-          regexp_replace(split_part(price, ' - ', 1), '[^0-9.]', '', 'g')
-          AS numeric
-        )
-      ) AS average_price
-      FROM products
+      SELECT SUM(CAST(regexp_replace(price, '[^0-9.]', '', 'g') AS numeric)) AS total_income
+      FROM orders
     `);
-    res.json({ average_price: parseFloat(result.rows[0].average_price) || 0 });
+    res.json({ total_income: parseFloat(result.rows[0].total_income) || 0 });
   } catch (err) {
-    console.error("Error fetching average price:", err);
-    res.status(500).json({ message: "Failed to fetch average price" });
+    console.error("Error fetching total income:", err);
+    res.status(500).json({ message: "Failed to fetch total income" });
   }
 });
 
-
-
-// ------------------------------------------------------Get most expensive product---------------------------------------------------------------------------------
-app.get("/api/products/most-expensive", authorizeAdmin, async (req, res) => {
+// ------------------------------------------------------------Order count----------------------------------------------------------------------------------------------------------------
+app.get("/api/orders/count", authorizeAdmin, async (req, res) => {
   try {
-    const result = await pool.query("SELECT name, price FROM products ORDER BY price DESC LIMIT 1");
-    res.json(result.rows[0] || { name: 'N/A', price: 0 });
+    const result = await pool.query("SELECT COUNT(*) AS total_orders FROM orders");
+    res.json({ total_orders: parseInt(result.rows[0].total_orders, 10) });
   } catch (err) {
-    console.error("Error fetching most expensive product:", err);
-    res.status(500).json({ message: "Failed to fetch most expensive product" });
+    console.error("Error fetching order count:", err);
+    res.status(500).json({ message: "Failed to fetch order count" });
   }
 });
 
-
-
-//------------------------------------------------------Get most popular product (based on sold count)------------------------------------------------------
+// --------------------------------------------------------------Most popular product----------------------------------------------------------------------------------------
 app.get("/api/products/most-popular", authorizeAdmin, async (req, res) => {
   try {
     const result = await pool.query(`
