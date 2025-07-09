@@ -9,6 +9,23 @@ const jwt = require("jsonwebtoken");
 const fs = require("fs");
 
 const app = express();
+function printRoutes(stack, prefix = '') {
+  stack.forEach((layer) => {
+    if (layer.route) {
+      // routes registered directly on the app
+      const methods = Object.keys(layer.route.methods).join(', ').toUpperCase();
+      console.log(`${methods} ${prefix}${layer.route.path}`);
+    } else if (layer.name === 'router' && layer.handle.stack) {
+      // router middleware 
+      printRoutes(layer.handle.stack, prefix + (layer.regexp.source.replace('^\\','').replace('\\/?(?=\\/|$)','')));
+    } else if (layer.name === 'bound dispatch') {
+      // ignore
+    } else {
+      console.log(`Middleware: ${layer.name} ${prefix}${layer.regexp}`);
+    }
+  });
+}
+
 
 // ---------------------------
 // Create uploads folder if missing on Railway volume
@@ -701,7 +718,13 @@ app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "../client/build/index.html"));
 });
 
-// ---------------------------
+
+
+// After your routes and middleware setup, add:
+console.log('Registered routes and middleware:');
+printRoutes(app._router.stack);
+
+
 // Start server
 // ---------------------------
 
