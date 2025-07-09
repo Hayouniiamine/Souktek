@@ -22,6 +22,8 @@ export default function ProductPage() {
       return;
     }
 
+    window.scrollTo(0, 0); // Scroll to top when navigating to another product
+
     const fetchProduct = async () => {
       try {
         const res = await fetch(`${API_BASE_URL}/api/products/name/${name}`);
