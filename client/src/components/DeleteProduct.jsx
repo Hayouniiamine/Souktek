@@ -29,6 +29,14 @@ const DeleteProduct = () => {
       ? products
       : products.filter((product) => product.type === filterType);
 
+  // Helper to get full image URL
+  const getFullImageUrl = (img) => {
+    if (!img) return "/images/default_image.png";
+    return `${API_BASE_URL}${
+      img.startsWith("/images") || img.startsWith("/uploads") ? img : "/images/" + img
+    }`;
+  };
+
   const handleDelete = async (id, name) => {
     if (window.confirm(`Are you sure you want to delete "${name}"?`)) {
       const token = localStorage.getItem("token");
@@ -91,15 +99,7 @@ const DeleteProduct = () => {
               >
                 <div className="w-full h-40 flex items-center justify-center bg-gray-200">
                   <img
-                    src={
-                      product.img
-                        ? `${API_BASE_URL}${
-                            product.img.startsWith("/images")
-                              ? product.img
-                              : "/images/" + product.img
-                          }`
-                        : "/images/default_image.png"
-                    }
+                    src={getFullImageUrl(product.img)}
                     alt={product.name}
                     className="max-h-32 object-contain"
                   />

@@ -32,6 +32,14 @@ const UpdateProduct = () => {
     }
   }
 
+  // Helper to generate full image URL
+  const getFullImageUrl = (img) => {
+    if (!img) return "/images/default_image.png";
+    return `${API_BASE_URL}${
+      img.startsWith("/images") || img.startsWith("/uploads") ? img : "/images/" + img
+    }`;
+  };
+
   const filteredProducts =
     filterType === "all"
       ? products
@@ -76,15 +84,7 @@ const UpdateProduct = () => {
               {/* Image */}
               <div className="flex justify-center bg-gray-200 p-4 rounded mb-4">
                 <img
-                  src={
-                    product.img
-                      ? `${API_BASE_URL}${
-                          product.img.startsWith("/images")
-                            ? product.img
-                            : "/images/" + product.img
-                        }`
-                      : "/images/default_image.png"
-                  }
+                  src={getFullImageUrl(product.img)}
                   alt={product.name}
                   className="max-h-40 object-contain"
                 />

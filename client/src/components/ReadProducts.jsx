@@ -29,6 +29,14 @@ const ReadProducts = () => {
       ? products
       : products.filter((product) => product.type === filterType);
 
+  // Helper to get full image URL, supporting /images and /uploads paths
+  const getFullImageUrl = (img) => {
+    if (!img) return '/images/default_image.png';
+    return `${API_BASE_URL}${
+      img.startsWith('/images') || img.startsWith('/uploads') ? img : '/images/' + img
+    }`;
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       <div className="max-w-7xl mx-auto">
@@ -64,15 +72,7 @@ const ReadProducts = () => {
               >
                 <div className="w-full h-40 flex items-center justify-center bg-gray-200">
                   <img
-                    src={
-                      product.img
-                        ? `${API_BASE_URL}${
-                            product.img.startsWith('/images')
-                              ? product.img
-                              : '/images/' + product.img
-                          }`
-                        : '/images/default_image.png'
-                    }
+                    src={getFullImageUrl(product.img)}
                     alt={product.name}
                     className="max-h-32 object-contain"
                   />

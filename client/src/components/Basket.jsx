@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import Footer from './Footer';
 import Navbar from './Navbar';
 import { useCart } from "./context/CartContext";
-import API_BASE_URL from "../config"; // Added: Import API_BASE_URL
+import API_BASE_URL from "../config";
 
 const Basket = () => {
   const navigate = useNavigate();
@@ -12,11 +12,6 @@ const Basket = () => {
 
   const subtotal = getCartTotalPrice();
   const total = subtotal;
-
-  console.log("Basket component: Current cart state:", cart);
-  console.log("Basket component: Calculated subtotal:", subtotal, "Type:", typeof subtotal);
-  console.log("Basket component: Calculated total:", total, "Type:", typeof total);
-
 
   if (cart.length === 0)
     return (
@@ -45,9 +40,7 @@ const Basket = () => {
           </div>
 
           <div className="text-white text-2xl font-semibold flex items-center gap-2 mb-5">
-            <span className="text-3xl inline-block -translate-y-px">
-              &#128722;
-            </span>{" "}
+            <span className="text-3xl inline-block -translate-y-px">&#128722;</span>{" "}
             Shopping Cart
           </div>
 
@@ -60,8 +53,8 @@ const Basket = () => {
                 <img
                   src={
                     item.img
-                      ? `${API_BASE_URL}${ // Changed to API_BASE_URL
-                          item.img.startsWith("/images")
+                      ? `${API_BASE_URL}${
+                          item.img.startsWith("/images") || item.img.startsWith("/uploads")
                             ? item.img
                             : "/images/" + item.img
                         }`
@@ -73,9 +66,7 @@ const Basket = () => {
               </div>
 
               <div className="flex-grow flex flex-col text-[#e0e0e0] text-center sm:text-left">
-                <div className="font-semibold text-lg mb-1">
-                  {item.name}
-                </div>
+                <div className="font-semibold text-lg mb-1">{item.name}</div>
                 <div className="text-xs text-gray-400 mb-0.5">
                   {item.optionLabel || item.option || "Standard Option"}
                 </div>
@@ -104,26 +95,21 @@ const Basket = () => {
 
                 <div className="font-bold text-lg text-[#e0e0e0] min-w-20 text-right">
                   {(() => {
-                    console.log("Basket item details:", item);
-                    console.log("  item.price:", item.price, "type:", typeof item.price);
-                    console.log("  item.quantity:", item.quantity, "type:", typeof item.quantity);
-
                     const parsedPrice = parseFloat(item.price);
-                    const parsedQuantity = parseInt(item.quantity); // Use parseInt for quantity, parseFloat for price
+                    const parsedQuantity = parseInt(item.quantity, 10);
 
                     if (isNaN(parsedPrice) || isNaN(parsedQuantity)) {
-                        console.warn("WARN: Invalid price or quantity for basket item:", item);
-                        return "TND N/A";
+                      return "TND N/A";
                     }
                     const calculatedPrice = parsedPrice * parsedQuantity;
                     return `TND${calculatedPrice.toFixed(2)}`;
                   })()}
                 </div>
                 <button
-                    onClick={() => removeFromCart(item.cartItemId)}
-                    className="bg-red-600 text-white border-none rounded px-2.5 py-1.5 cursor-pointer text-xs ml-2"
+                  onClick={() => removeFromCart(item.cartItemId)}
+                  className="bg-red-600 text-white border-none rounded px-2.5 py-1.5 cursor-pointer text-xs ml-2"
                 >
-                    Remove
+                  Remove
                 </button>
               </div>
             </div>
@@ -132,18 +118,14 @@ const Basket = () => {
 
         {/* Right Column: Order Summary */}
         <div className="flex flex-col gap-4 flex-1 bg-[#22252a] rounded-lg p-5 shadow-md text-[#e0e0e0] w-full md:w-1/3 md:mt-20 h-fit">
-          <div className="font-semibold text-lg mb-2">
-            Order Summary
-          </div>
+          <div className="font-semibold text-lg mb-2">Order Summary</div>
 
           <div className="flex justify-between items-center pb-2 border-b border-[#333]">
             <span className="text-sm text-gray-400">Subtotal</span>
             <span className="font-semibold text-base">
               {(() => {
-                console.log("Subtotal value:", subtotal, "type:", typeof subtotal);
                 const parsedSubtotal = parseFloat(subtotal);
                 if (isNaN(parsedSubtotal)) {
-                  console.warn("WARN: Subtotal is not a valid number:", subtotal);
                   return "TND N/A";
                 }
                 return `TND${parsedSubtotal.toFixed(2)}`;
@@ -155,10 +137,8 @@ const Basket = () => {
             <span className="font-bold text-lg">Total</span>
             <span className="font-bold text-lg">
               {(() => {
-                console.log("Total value:", total, "type:", typeof total);
                 const parsedTotal = parseFloat(total);
                 if (isNaN(parsedTotal)) {
-                  console.warn("WARN: Total is not a valid number:", total);
                   return "TND N/A";
                 }
                 return `TND${parsedTotal.toFixed(2)}`;
@@ -175,12 +155,12 @@ const Basket = () => {
         </div>
       </div>
 
-      {/* New Section: Delivery and Trust Info */}
+      {/* Delivery and Trust Info Section */}
       <div className="mt-20 w-full max-w-7xl mx-auto px-5">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 text-center text-[#e0e0e0]">
           <div>
             <div className="text-4xl mb-2">📧</div>
-            <h3 className="font-semibold text-lg"> Email delivery</h3>
+            <h3 className="font-semibold text-lg">Email delivery</h3>
             <p className="text-gray-400 text-sm mt-1">
               Your digital Gift card is ready to use within 10 minutes.
             </p>

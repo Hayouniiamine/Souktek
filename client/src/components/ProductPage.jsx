@@ -4,7 +4,6 @@ import Footer from "./Footer";
 import { ShoppingCart } from "lucide-react";
 import { useCart } from "./context/CartContext";
 import API_BASE_URL from "../config";
-import { getImageUrl } from "../utils/imageHelper"; // 👈 Import image helper
 
 export default function ProductPage() {
   const { name } = useParams();
@@ -64,7 +63,15 @@ export default function ProductPage() {
   if (error) return <div className="text-red-500 p-4">{error}</div>;
   if (!product) return <div className="text-white p-4">Product data is not available.</div>;
 
-  const imageUrl = getImageUrl(product.img);
+  // Fix for image URL supporting /images and /uploads folders
+  const getFullImageUrl = (img) => {
+    if (!img) return "/images/default_image.png";
+    return `${API_BASE_URL}${
+      img.startsWith("/images") || img.startsWith("/uploads") ? img : "/images/" + img
+    }`;
+  };
+
+  const imageUrl = getFullImageUrl(product.img);
 
   return (
     <div className="bg-[#0e1117] min-h-screen text-white">
@@ -123,7 +130,7 @@ export default function ProductPage() {
           <h2 className="text-xl font-semibold mb-4">More like this</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {moreProducts.map((p) => {
-              const pImage = getImageUrl(p.img); // ✅ Updated here
+              const pImage = getFullImageUrl(p.img);
 
               return (
                 <Link

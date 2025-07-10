@@ -11,7 +11,7 @@ const EditProduct = () => {
     price: "",
     img: "",
     description: "",
-    type: "", // needed by backend
+    type: "",
   });
   const [options, setOptions] = useState([]);
   const [image, setImage] = useState(null);
@@ -161,43 +161,93 @@ const EditProduct = () => {
   const inputClass =
     "w-full px-4 py-2 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-indigo-500";
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center bg-gray-100">Loading...</div>;
-  if (error) return <div className="min-h-screen flex items-center justify-center bg-gray-100 text-red-600">Error: {error}</div>;
+  // Helper to fix image URL for display
+  const getFullImageUrl = (img) => {
+    if (!img) return null;
+    return `${API_BASE_URL}${img.startsWith("/images") || img.startsWith("/uploads") ? img : "/images/" + img}`;
+  };
+
+  if (loading)
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        Loading...
+      </div>
+    );
+  if (error)
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100 text-red-600">
+        Error: {error}
+      </div>
+    );
 
   return (
     <div className="min-h-screen bg-gray-100 p-6 flex justify-center">
       <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-3xl">
-        <h1 className="text-3xl font-bold text-center text-gray-800 mb-8">Edit Product: {product.name}</h1>
+        <h1 className="text-3xl font-bold text-center text-gray-800 mb-8">
+          Edit Product: {product.name}
+        </h1>
 
         <form onSubmit={handleSubmit}>
           {/* === Product Basic Fields === */}
           <div className="mb-6">
             <div className="mb-4">
               <label className="block font-semibold text-black mb-1">Product Name</label>
-              <input type="text" name="name" value={product.name} onChange={handleProductChange} className={inputClass} />
+              <input
+                type="text"
+                name="name"
+                value={product.name}
+                onChange={handleProductChange}
+                className={inputClass}
+              />
             </div>
 
             <div className="mb-4">
               <label className="block font-semibold text-black mb-1">Price Range</label>
-              <input type="text" name="price" value={product.price} onChange={handleProductChange} className={inputClass} />
+              <input
+                type="text"
+                name="price"
+                value={product.price}
+                onChange={handleProductChange}
+                className={inputClass}
+              />
             </div>
 
             <div className="mb-4">
               <label className="block font-semibold text-black mb-1">Product Type</label>
-              <input type="text" name="type" value={product.type} onChange={handleProductChange} className={inputClass} />
+              <input
+                type="text"
+                name="type"
+                value={product.type}
+                onChange={handleProductChange}
+                className={inputClass}
+              />
             </div>
 
             <div className="mb-4">
               <label className="block font-semibold text-black mb-1">Description</label>
-              <textarea rows={4} name="description" value={product.description} onChange={handleProductChange} className={`${inputClass} resize-none`} />
+              <textarea
+                rows={4}
+                name="description"
+                value={product.description}
+                onChange={handleProductChange}
+                className={`${inputClass} resize-none`}
+              />
             </div>
 
             <div className="mb-4">
               <label className="block font-semibold text-black mb-1">Product Image</label>
-              <input type="file" onChange={(e) => setImage(e.target.files[0])} className="text-black" />
+              <input
+                type="file"
+                onChange={(e) => setImage(e.target.files[0])}
+                className="text-black"
+              />
               {product.img && (
                 <div className="mt-3">
-                  <img src={`${API_BASE_URL}${product.img}`} alt="Current" className="max-h-40 rounded shadow" />
+                  <img
+                    src={getFullImageUrl(product.img)}
+                    alt="Current"
+                    className="max-h-40 rounded shadow"
+                  />
                 </div>
               )}
             </div>
@@ -210,22 +260,54 @@ const EditProduct = () => {
               <p className="text-gray-700">No options for this product.</p>
             ) : (
               options.map((opt) => (
-                <div key={opt.id} className="bg-gray-50 p-4 mb-4 rounded-lg shadow-sm">
-                  <h3 className="text-xl font-bold mb-3 text-black">Option: {opt.label}</h3>
+                <div
+                  key={opt.id}
+                  className="bg-gray-50 p-4 mb-4 rounded-lg shadow-sm"
+                >
+                  <h3 className="text-xl font-bold mb-3 text-black">
+                    Option: {opt.label}
+                  </h3>
 
                   <div className="mb-2">
-                    <label className="block font-semibold text-black mb-1">Label</label>
-                    <input type="text" value={editedOptions[opt.id]?.label ?? ""} onChange={(e) => handleOptionChange(opt.id, "label", e.target.value)} className={inputClass} />
+                    <label className="block font-semibold text-black mb-1">
+                      Label
+                    </label>
+                    <input
+                      type="text"
+                      value={editedOptions[opt.id]?.label ?? ""}
+                      onChange={(e) =>
+                        handleOptionChange(opt.id, "label", e.target.value)
+                      }
+                      className={inputClass}
+                    />
                   </div>
 
                   <div className="mb-2">
-                    <label className="block font-semibold text-black mb-1">Price (DT)</label>
-                    <input type="text" value={editedOptions[opt.id]?.price ?? ""} onChange={(e) => handleOptionChange(opt.id, "price", e.target.value)} className={inputClass} />
+                    <label className="block font-semibold text-black mb-1">
+                      Price (DT)
+                    </label>
+                    <input
+                      type="text"
+                      value={editedOptions[opt.id]?.price ?? ""}
+                      onChange={(e) =>
+                        handleOptionChange(opt.id, "price", e.target.value)
+                      }
+                      className={inputClass}
+                    />
                   </div>
 
                   <div className="mb-2">
-                    <label className="block font-semibold text-black mb-1">Description</label>
-                    <textarea rows={3} value={editedOptions[opt.id]?.description ?? ""} onChange={(e) => handleOptionChange(opt.id, "description", e.target.value)} className={`${inputClass} resize-none`} />
+                    <label className="block font-semibold text-black mb-1">
+                      Description
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={editedOptions[opt.id]?.description ?? ""}
+                      onChange={(e) =>
+                        handleOptionChange(opt.id, "description", e.target.value)
+                      }
+                      className={`${inputClass} resize-none`}
+                    />
                   </div>
 
                   <button
@@ -240,7 +322,10 @@ const EditProduct = () => {
             )}
           </div>
 
-          <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-lg mt-6">
+          <button
+            type="submit"
+            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-lg mt-6"
+          >
             Update Product & Options
           </button>
         </form>

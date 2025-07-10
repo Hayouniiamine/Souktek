@@ -34,7 +34,9 @@ export default function Bestsellers() {
                   src={
                     product.img
                       ? `${API_BASE_URL}${
-                          product.img.startsWith("/images") ? product.img : "/images/" + product.img
+                          product.img.startsWith("/images") || product.img.startsWith("/uploads")
+                            ? product.img
+                            : "/images/" + product.img
                         }`
                       : "/images/default_image.png"
                   }
@@ -62,7 +64,9 @@ export default function Bestsellers() {
                   src={
                     product.img
                       ? `${API_BASE_URL}${
-                          product.img.startsWith("/images") ? product.img : "/images/" + product.img
+                          product.img.startsWith("/images") || product.img.startsWith("/uploads")
+                            ? product.img
+                            : "/images/" + product.img
                         }`
                       : "/images/default_image.png"
                   }
@@ -83,9 +87,7 @@ export default function Bestsellers() {
               onClick={() => setShowAllGames(!showAllGames)}
               className="px-6 py-3 bg-white text-black font-semibold rounded-full shadow-md hover:bg-gray-200 transition-all duration-300 flex items-center gap-2 group"
             >
-              <span className="text-base">
-                {showAllGames ? "Show Less" : "Show More"}
-              </span>
+              <span className="text-base">{showAllGames ? "Show Less" : "Show More"}</span>
               <svg
                 className={`w-5 h-5 transition-transform duration-300 group-hover:translate-x-1 ${
                   showAllGames ? "rotate-180" : ""
