@@ -161,7 +161,9 @@ export default function Footer() {
 
       <div className="mt-12 text-center text-sm text-gray-600">
         &copy; {new Date().getFullYear()} Souktek. All rights reserved.
+        <br>
         &copy;Devolopped by Hayouni_Amin.
+        </br>
       </div>
     </footer>
   );

@@ -40,10 +40,18 @@ export default function Navbar() {
   return (
     <nav className="bg-[#0e1117] text-white py-4 px-6 flex items-center justify-between shadow-lg relative z-50 flex-wrap">
       {/* Logo + Tagline */}
-      <div className="flex items-center space-x-2">
-        <img src="/images/logo.png" alt="Souktek Logo" className="h-8" />
-        <span className="text-sm text-gray-400 hidden sm:inline">Buy Gift Cards Online</span>
-      </div>
+<div className="flex items-center space-x-2">
+  <Link to="/">
+    <img
+      src="/images/logo.png"
+      alt="Souktek Logo"
+      className="h-12 sm:h-14 cursor-pointer"
+    />
+  </Link>
+  <span className="text-sm text-gray-400 hidden sm:inline">
+    Buy Gift Cards Online
+  </span>
+</div>
 
       {/* Desktop Search */}
       <div className="flex-1 mx-6 hidden md:flex flex-col relative">

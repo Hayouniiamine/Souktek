@@ -139,7 +139,7 @@ const Checkout = () => {
             Instructions de Paiement
           </h2>
           <ul className="list-decimal list-inside space-y-2 text-base text-gray-300">
-            <li>Payer via D17 @ 20 123 567 ou Flouci @ 20 123 567.</li>
+            <li>Payer via D17 20563760 ou Flouci 20563760.</li>
             <li>Copiez le numéro d’autorisation.</li>
             <li>Collez-le dans le champ ci-dessous.</li>
             <li>
