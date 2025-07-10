@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import API_BASE_URL  from '../config';
+import API_BASE_URL from '../config';
 
 const UserDashboard = () => {
-  const [password, setPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [recentOrders, setRecentOrders] = useState([]);
@@ -13,80 +12,86 @@ const UserDashboard = () => {
 
   useEffect(() => {
     const userFromStorage = JSON.parse(localStorage.getItem('user'));
-    if (!userFromStorage) {
+    const token = localStorage.getItem('token');
+
+    if (!userFromStorage || !token) {
       navigate('/login');
-    } else {
-      setUser(userFromStorage);
-      // Pass userFromStorage.email to fetchRecentOrders
-      fetchRecentOrders(userFromStorage.email);
-      setLoading(false);
+      return;
     }
+
+    setUser(userFromStorage);
+
+    // Fetch orders using user email and token
+    fetchRecentOrders(userFromStorage.email, token).finally(() => setLoading(false));
   }, [navigate]);
 
-  // Updated to fetch orders by email
-  const fetchRecentOrders = async (userEmail) => {
+  const fetchRecentOrders = async (userEmail, token) => {
     try {
-      // Use the new API route to fetch orders by email
-      const response = await fetch(`${API_BASE_URL}/api/orders/email/${encodeURIComponent(userEmail)}`);
+      const response = await fetch(`${API_BASE_URL}/api/orders/user/${encodeURIComponent(userEmail)}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
       const data = await response.json();
 
       if (response.ok) {
-        // Assuming the backend returns an array of orders directly
         setRecentOrders(data);
       } else {
-        console.error("Failed to fetch orders:", data.message);
-        setRecentOrders([]); // Clear orders on error
+        console.error('Failed to fetch orders:', data.message);
+        setRecentOrders([]);
       }
     } catch (error) {
-      console.error("Error fetching orders:", error);
-      setRecentOrders([]); // Clear orders on error
+      console.error('Error fetching orders:', error);
+      setRecentOrders([]);
     }
   };
 
   const handleChangePassword = async (e) => {
     e.preventDefault();
-    if (newPassword === confirmNewPassword) {
-      try {
-        // Ensure you have an email for the user to send to the backend
-        if (!user || !user.email) {
-          alert('User email not found. Cannot change password.');
-          return;
-        }
 
-        const response = await fetch(`${API_BASE_URL}/api/users/password`, { // Corrected endpoint
-          method: 'PUT', // Use PUT for updating password
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            email: user.email, // Send email for password change
-            newPassword: newPassword,
-          }),
-        });
-
-        const data = await response.json();
-        if (response.ok) {
-          // Replace alert() with a custom modal or message box
-          // For now, using console.log as a placeholder
-          console.log('Password changed successfully!');
-          navigate('/login');
-        } else {
-          // Replace alert() with a custom modal or message box
-          console.error(data.message || 'Failed to change password.');
-        }
-      } catch (error) {
-        console.error('Error changing password:', error);
-        // Replace alert() with a custom modal or message box
-        console.error('Something went wrong. Please try again.');
-      }
-    } else {
-      // Replace alert() with a custom modal or message box
+    if (newPassword !== confirmNewPassword) {
       console.error('Passwords do not match!');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('Session expired, please login again.');
+        navigate('/login');
+        return;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/users/password`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ newPassword }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        console.log('Password changed successfully!');
+        alert('Password updated! Please log in again.');
+        // Clear user and token on password change
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+        navigate('/login');
+      } else {
+        console.error(data.message || 'Failed to change password.');
+      }
+    } catch (error) {
+      console.error('Error changing password:', error);
     }
   };
 
   const handleLogout = () => {
     localStorage.removeItem('user');
+    localStorage.removeItem('token');
     navigate('/login');
   };
 
@@ -104,9 +109,7 @@ const UserDashboard = () => {
           <h3 className="text-2xl font-semibold mb-6">Profile Settings</h3>
           <form onSubmit={handleChangePassword} className="space-y-4">
             <div>
-              <label className="block text-gray-300 text-sm font-semibold mb-2">
-                New Password
-              </label>
+              <label className="block text-gray-300 text-sm font-semibold mb-2">New Password</label>
               <input
                 type="password"
                 value={newPassword}
@@ -116,9 +119,7 @@ const UserDashboard = () => {
               />
             </div>
             <div>
-              <label className="block text-gray-300 text-sm font-semibold mb-2">
-                Confirm New Password
-              </label>
+              <label className="block text-gray-300 text-sm font-semibold mb-2">Confirm New Password</label>
               <input
                 type="password"
                 value={confirmNewPassword}
@@ -148,9 +149,9 @@ const UserDashboard = () => {
                   key={order.id}
                   className="bg-[#2e353e] p-4 rounded-lg shadow hover:shadow-md transition-shadow"
                 >
-                  <p className="text-md font-semibold mb-2">{order.product_name}</p> {/* Changed to product_name */}
-                  <p className="text-sm text-gray-400 mb-1">Date: {new Date(order.order_time).toLocaleDateString()}</p> {/* Changed to order_time */}
-                  <p className="text-sm text-gray-400">Amount: ${order.price.toFixed(2)}</p> {/* Changed to price */}
+                  <p className="text-md font-semibold mb-2">{order.product_name}</p>
+                  <p className="text-sm text-gray-400 mb-1">Date: {new Date(order.order_time).toLocaleDateString()}</p>
+                  <p className="text-sm text-gray-400">Amount: ${order.price ? parseFloat(order.price).toFixed(2) : 'N/A'}</p>
                 </div>
               ))}
             </div>

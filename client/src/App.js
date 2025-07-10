@@ -8,7 +8,6 @@ import Footer from "./components/Footer";
 import ProductPage from './components/ProductPage';
 
 import Login from './components/Login';
-import Signup from './components/Signup';
 import SecretKeyVerification from './components/SecretKeyVerification';
 import UserDashboard from './components/UserDashboard';
 
@@ -47,7 +46,6 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/product/:name" element={<ProductPage />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
         <Route path="/secret-key-verification" element={<SecretKeyVerification />} />
         <Route path="/terms-conditions" element={<TermsConditions />} /> {/* New route for Terms and Conditions */}
 

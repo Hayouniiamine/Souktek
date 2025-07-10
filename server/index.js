@@ -690,40 +690,6 @@ app.post("/api/orders", async (req, res) => {
 // USER AUTHENTICATION ROUTES
 // ---------------------------
 
-// Sign up a new user with hashed password
-app.post("/api/auth/signup", async (req, res) => { // Changed route to match deployed
-  const { username, email, password, phone, is_admin, avatar } = req.body; // Added phone, is_admin, avatar
-
-  if (!username || !email || !password || !phone) { // phone is now required based on deployed code
-    return res.status(400).json({ message: "Please provide username, email, password, and phone." });
-  }
-
-  try {
-    const userExists = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
-    if (userExists.rows.length > 0) {
-      return res.status(409).json({ message: "User already exists with this email." });
-    }
-
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    const newUser = await pool.query(
-      "INSERT INTO users (email, password, phone, username, is_admin, avatar) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
-      [email, hashedPassword, phone, username, is_admin || false, avatar || null]
-    );
-
-    const token = jwt.sign(
-      { id: newUser.rows[0].id, email: newUser.rows[0].email, is_admin: newUser.rows[0].is_admin },
-      JWT_SECRET,
-      { expiresIn: "7d" } // Increased expiry to 7 days as in deployed code
-    );
-
-    res.status(201).json({ message: "User created successfully", token, user: newUser.rows[0] });
-  } catch (err) {
-    console.error("Signup error:", err);
-    res.status(500).json({ message: "Internal server error" });
-  }
-});
 
 // Login route (UPDATED TO ISSUE JWT and match deployed route)
 app.post("/api/auth/login", async (req, res) => { // Changed route to match deployed

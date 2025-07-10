@@ -1,40 +1,25 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import API_BASE_URL from "../config";
 
 export default function Footer() {
   const productIcons = [
-    "apple.webp",
-    "crunchyroll.png",
-    "fortnite.webp",
-    "freefire.webp",
-    "linkedin.webp",
-    "netflix.webp",
-    "playstation.webp",
-    "rewarble-chatgpt.webp",
-    "rewarble-discord.webp",
-    "rewarble-tiktok-ads.webp",
-    "starzaplay.png",
-    "steam.webp",
-    "tinder.webp",
-    "Shahid.png",
-    "surfshark.png",
-    "prepexility.jpg",
-    "xbox.png",
-    "tod.png",
-    "Gemini_Advanced.png",
-    "disney.webp",
-    "google.webp",
-    "picture.png",
-    "spotify.webp",
-    "roblox.webp",
-    "tinder.webp",
+    "apple.webp", "crunchyroll.png", "fortnite.webp", "freefire.webp", "linkedin.webp",
+    "netflix.webp", "playstation.webp", "rewarble-chatgpt.webp", "rewarble-discord.webp",
+    "rewarble-tiktok-ads.webp", "starzaplay.png", "steam.webp", "tinder.webp", "Shahid.png",
+    "surfshark.png", "prepexility.jpg", "xbox.png", "tod.png", "Gemini_Advanced.png",
+    "disney.webp", "google.webp", "picture.png", "spotify.webp", "roblox.webp", "tinder.webp",
     "osn.png",
   ];
+
+  const handleTermsClick = () => {
+    window.location.href = "/terms-conditions";
+    window.scrollTo(0, 0);
+  };
 
   return (
     <footer className="bg-[#0e1117] text-white py-12 px-6 mt-16 border-t border-gray-800">
       <div className="max-w-screen-xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-10">
-        {/* About Us */}
         <div>
           <h2 className="text-xl font-semibold mb-4">About Souktek</h2>
           <p className="text-gray-400 text-sm mb-4">
@@ -43,7 +28,6 @@ export default function Footer() {
             payment guaranteed.
           </p>
           <ul className="flex gap-4 mt-4">
-
             <li>
               <a
                 href="https://www.tiktok.com/@souktek.tn?_t=ZM-8xccULv4V5s&_r=1"
@@ -64,7 +48,7 @@ export default function Footer() {
                 rel="noopener noreferrer"
               >
                 <img
-                  src="/images/icons/instagram.png"
+                  src={`${API_BASE_URL}/uploads/1752108171595.png`}
                   alt="Instagram"
                   className="w-10 h-10"
                 />
@@ -95,14 +79,16 @@ export default function Footer() {
           </p>
         </div>
 
-        {/* Legal */}
         <div>
           <h2 className="text-xl font-semibold mb-4">Legal</h2>
           <ul className="space-y-2 text-sm text-gray-400">
             <li>
-              <Link to="/terms-conditions" className="hover:text-blue-500">
+              <button
+                className="hover:text-blue-500 bg-transparent border-none p-0 cursor-pointer"
+                onClick={handleTermsClick}
+              >
                 Terms & Conditions
-              </Link>
+              </button>
             </li>
             <li>
               <button
@@ -125,7 +111,6 @@ export default function Footer() {
           </ul>
         </div>
 
-        {/* Support */}
         <div>
           <h2 className="text-xl font-semibold mb-4">Support</h2>
           <ul className="space-y-2 text-sm text-gray-400">
@@ -159,7 +144,6 @@ export default function Footer() {
           </ul>
         </div>
 
-        {/* Product Icons */}
         <div>
           <h2 className="text-xl font-semibold mb-4">Our Products</h2>
           <div className="grid grid-cols-4 gap-4">
@@ -177,6 +161,7 @@ export default function Footer() {
 
       <div className="mt-12 text-center text-sm text-gray-600">
         &copy; {new Date().getFullYear()} Souktek. All rights reserved.
+        &copy;Devolopped by Hayouni_Amin.
       </div>
     </footer>
   );

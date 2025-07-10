@@ -11,8 +11,8 @@ export default function Navbar() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [allProducts, setAllProducts] = useState([]);
+  const [showMobileSearch, setShowMobileSearch] = useState(false);
 
-  // Fetch all products on mount
   useEffect(() => {
     const fetchProducts = async () => {
       const res = await fetch(`${API_BASE_URL}/api/products`);
@@ -22,7 +22,6 @@ export default function Navbar() {
     fetchProducts();
   }, []);
 
-  // Search filter logic
   useEffect(() => {
     if (searchQuery) {
       const results = allProducts.filter((product) =>
@@ -39,13 +38,14 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="bg-[#0e1117] text-white py-4 px-6 flex items-center justify-between shadow-lg relative z-50">
+    <nav className="bg-[#0e1117] text-white py-4 px-6 flex items-center justify-between shadow-lg relative z-50 flex-wrap">
+      {/* Logo + Tagline */}
       <div className="flex items-center space-x-2">
         <img src="/images/logo.png" alt="Souktek Logo" className="h-8" />
         <span className="text-sm text-gray-400 hidden sm:inline">Buy Gift Cards Online</span>
       </div>
 
-      {/* Search Section */}
+      {/* Desktop Search */}
       <div className="flex-1 mx-6 hidden md:flex flex-col relative">
         <div className="relative w-full max-w-md">
           <input
@@ -72,6 +72,7 @@ export default function Navbar() {
                     onClick={() => {
                       setSearchResults([]);
                       setSearchQuery("");
+                      setShowMobileSearch(false);
                     }}
                   >
                     {product.name}
@@ -83,8 +84,14 @@ export default function Navbar() {
         )}
       </div>
 
-      {/* Right icons */}
+      {/* Right Icons */}
       <div className="flex items-center space-x-4">
+        <div className="md:hidden">
+          <button onClick={() => setShowMobileSearch((prev) => !prev)}>
+            <FaSearch className="text-xl" />
+          </button>
+        </div>
+
         <div className="flex items-center space-x-1 text-sm cursor-pointer">
           <img
             src="https://flagcdn.com/tn.svg"
@@ -106,6 +113,45 @@ export default function Navbar() {
           <FaUserCircle className="text-xl" />
         </Link>
       </div>
+
+      {/* Mobile Search Input */}
+      {showMobileSearch && (
+        <div className="w-full mt-3 md:hidden relative">
+          <input
+            type="text"
+            placeholder="Search products..."
+            className="w-full py-2 pl-10 pr-4 rounded-full bg-[#1c2027] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            value={searchQuery}
+            onChange={handleSearchChange}
+          />
+          <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+
+          {searchResults.length > 0 && searchQuery && (
+            <div className="absolute top-full left-0 right-0 mt-2 bg-[#1c2027] rounded-md shadow-lg max-h-60 overflow-y-auto z-50">
+              <ul className="py-1">
+                {searchResults.map((product) => (
+                  <li
+                    key={product.id}
+                    className="px-4 py-2 hover:bg-gray-700 cursor-pointer"
+                  >
+                    <Link
+                      to={`/product/${encodeURIComponent(product.name)}`}
+                      className="block text-white"
+                      onClick={() => {
+                        setSearchResults([]);
+                        setSearchQuery("");
+                        setShowMobileSearch(false);
+                      }}
+                    >
+                      {product.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
     </nav>
   );
 }

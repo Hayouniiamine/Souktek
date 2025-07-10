@@ -54,9 +54,9 @@ const Login = () => {
         {/* Logo and Description */}
         <div className="text-center mb-8">
           <FaShoppingCart className="text-5xl text-blue-500 mb-3 mx-auto" />
-          <h2 className="text-4xl font-bold text-white">Welcome Back!</h2>
+          <h2 className="text-4xl font-bold text-white">Welcome !</h2>
           <p className="text-sm text-gray-400 mt-2">
-            Sign in to access your account and manage your orders.
+            Sign in to access your account and see your orders.
           </p>
         </div>
 
@@ -97,14 +97,7 @@ const Login = () => {
           </button>
         </form>
 
-        <div className="mt-6 text-center">
-          <p className="text-sm text-gray-400">
-            Don't have an account?{" "}
-            <a href="/signup" className="text-blue-500 hover:underline">
-              Sign Up
-            </a>
-          </p>
-        </div>
+
       </div>
     </div>
   );
