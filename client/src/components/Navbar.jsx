@@ -41,7 +41,7 @@ export default function Navbar() {
     <nav className="bg-[#0e1117] text-white py-4 px-6 flex items-center justify-between shadow-lg relative z-50 flex-wrap">
       {/* Logo + Tagline */}
 <div className="flex items-center space-x-2">
-  <Link to="/home">
+  <Link to="/">
     <img
       src="/images/logo.png"
       alt="Souktek Logo"
