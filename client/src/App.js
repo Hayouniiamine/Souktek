@@ -43,7 +43,7 @@ function App() {
     <div className="bg-[#0e1117] text-white min-h-screen">
       <Routes>
         {/* Public Routes */}
-        <Route path="/" element={<Home />} />
+        <Route path="/home" element={<Home />} />
         <Route path="/product/:name" element={<ProductPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/secret-key-verification" element={<SecretKeyVerification />} />
