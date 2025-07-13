@@ -92,7 +92,7 @@ const Checkout = () => {
           </button>
           {/* The radio buttons are replaced with your banner image */}
           <img 
-            src="/uploads/full-mode-paiment-2048x375.webp" 
+            src="/uploads/1752408942147.webp" 
             alt="Payment Methods Banner"
             className="w-full h-auto rounded-md"
           />
