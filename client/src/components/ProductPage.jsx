@@ -81,7 +81,6 @@ export default function ProductPage() {
         <div className="text-center md:text-left max-w-xl">
           <h1 className="text-3xl font-bold mb-2">{product.name}</h1>
           <p className="text-white text-sm mb-1">{product.description}</p>
-          <p className="text-white text-xs">Instant Wallet Recharge · Redeemable Globally</p>
         </div>
       </div>
 

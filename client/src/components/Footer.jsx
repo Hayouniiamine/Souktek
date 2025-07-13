@@ -35,7 +35,7 @@ export default function Footer() {
                 rel="noopener noreferrer"
               >
                 <img
-                  src="/images/icons/tiktok.webp"
+                  src="uploads/1752415384933.png"
                   alt="TikTok"
                   className="w-10 h-10"
                 />
@@ -61,7 +61,7 @@ export default function Footer() {
                 rel="noopener noreferrer"
               >
                 <img
-                  src="/images/icons/facebook.png"
+                  src="/uploads/1752414597991.png"
                   alt="Facebook"
                   className="w-10 h-10"
                 />

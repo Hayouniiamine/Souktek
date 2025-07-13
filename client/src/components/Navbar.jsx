@@ -43,7 +43,7 @@ export default function Navbar() {
 <div className="flex items-center space-x-2">
   <Link to="/">
     <img
-      src="/images/logo.png"
+      src="uploads/1752415767378.png"
       alt="Souktek Logo"
       className="h-12 sm:h-14 cursor-pointer"
     />
