@@ -9,7 +9,7 @@ const Checkout = () => {
   const navigate = useNavigate();
   const { cart, getCartTotalPrice } = useCart();
 
-  // State has been simplified
+  // State has been simplified to only what's needed for the form
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [whatsappPhone, setWhatsappPhone] = useState("");
@@ -31,9 +31,10 @@ const Checkout = () => {
 
   // Simplified order handler
   const handlePlaceOrder = async () => {
-    // Updated validation: removed transactionNum and selectedPaymentMethod
+    // Updated validation for the three required fields
     if (!fullName || !email || !whatsappPhone) {
       console.log("Veuillez remplir tous les champs requis.");
+      alert("Veuillez remplir tous les champs requis."); // Added alert for better user feedback
       return;
     }
 
@@ -49,7 +50,7 @@ const Checkout = () => {
         quantity: item.quantity ?? 1,
       }));
 
-      // Updated payload: removed transaction_number and payment_method
+      // Updated payload to match the backend and form
       const res = await fetch(`${API_BASE_URL}/api/orders`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -71,7 +72,7 @@ const Checkout = () => {
 
     } catch (err) {
       console.error("Erreur de commande:", err);
-      console.log("Erreur lors de la commande. Veuillez réessayer.");
+      alert("Erreur lors de la commande. Veuillez réessayer.");
     }
   };
 
@@ -80,7 +81,8 @@ const Checkout = () => {
       <Navbar />
 
       <div className="flex flex-col lg:flex-row gap-5 w-full max-w-7xl px-5 py-10">
-        {/* Container 1: Banner Image */}
+        
+        {/* Container 1: Banner Image (Replaces Radio Buttons) */}
         <div className="flex flex-col gap-4 flex-grow lg:w-2/3 bg-[#22252a] rounded-lg p-5 shadow-md">
           <button
             className="text-blue-500 text-base font-medium mb-2 self-start"
@@ -88,7 +90,7 @@ const Checkout = () => {
           >
             &#x2190; Retour au panier
           </button>
-          {/* Radio buttons replaced with the banner image */}
+          {/* The radio buttons are replaced with your banner image */}
           <img 
             src="/uploads/full-mode-paiment-2048x375.webp" 
             alt="Payment Methods Banner"
@@ -113,12 +115,10 @@ const Checkout = () => {
             </li>
             <li>Entrez votre e-mail et téléphone, puis cliquez sur “Passer la commande”.</li>
             <li>Notre équipe vous contactera dans les 10 minutes.</li>
-            {/* Added new instruction item */}
-            <li>Contactez-nous sur WhatsApp pour finaliser la commande.</li>
           </ul>
         </div>
 
-        {/* Container 3: Order Summary & Customer Details */}
+        {/* Container 3: Order Summary & Customer Details Form */}
         <div className="flex flex-col gap-4 lg:w-1/3 bg-[#22252a] rounded-lg p-5 shadow-md">
           <h3 className="font-semibold text-lg mb-2 text-white">Récapitulatif de la commande</h3>
 
@@ -147,9 +147,9 @@ const Checkout = () => {
             <span>TND{total.toFixed(2)}</span>
           </div>
 
-          {/* Form is now always visible */}
+          {/* Form is now always visible and simplified */}
           <div className="mt-6 border-t border-[#333] pt-4">
-            <h4 className="text-lg font-semibold mb-4 text-white">Vos informations</h4>
+            <h4 className="text-lg font-semibold mb-4 text-white">Détails du paiement</h4>
 
             <label className="block text-sm mb-1 text-white">Nom Complet</label>
             <input
@@ -177,17 +177,18 @@ const Checkout = () => {
 
             <label className="block text-sm mb-1 text-white">WhatsApp / Téléphone</label>
             <input
+              type="text"
               value={whatsappPhone}
               onChange={(e) => setWhatsappPhone(e.target.value)}
               className="w-full mb-3 p-2 rounded-md bg-[#1a1d22] border border-[#333] text-sm text-white"
               required
             />
 
-            {/* Transaction number input removed */}
+            {/* Transaction number input has been removed */}
 
             <button
               onClick={handlePlaceOrder}
-              className="w-full bg-green-600 hover:bg-green-700 py-3 rounded-md font-semibold uppercase tracking-wider"
+              className="w-full bg-green-600 hover:bg-green-700 py-3 rounded-md font-semibold uppercase tracking-wider mt-2"
             >
               Passer la commande
             </button>
