@@ -7,6 +7,9 @@ export default function Bestsellers() {
   const [showAllGames, setShowAllGames] = useState(false);
 
   useEffect(() => {
+    // Scroll to the top when the component loads
+    window.scrollTo(0, 0);
+
     fetch(`${API_BASE_URL}/api/products`)
       .then((res) => res.json())
       .then((data) => setProducts(data))
@@ -109,7 +112,7 @@ export default function Bestsellers() {
             <div className="text-3xl mb-2">📧</div>
             <h3 className="font-semibold text-lg"> Email delivery</h3>
             <p className="text-gray-400 text-sm mt-1">
-              Your digital Gift card is ready to use within 10 minites.
+              Your digital Gift card is ready to use within 10 minutes.
             </p>
           </div>
           <div>

@@ -92,30 +92,51 @@ const Checkout = () => {
           </button>
           {/* The radio buttons are replaced with your banner image */}
           <img 
-            src="/uploads/1752408942147.webp" 
+            src="/uploads/1752412189234.png" 
             alt="Payment Methods Banner"
             className="w-full h-auto rounded-md"
           />
         </div>
 
-        {/* Container 2: Payment Instructions */}
+        {/* Container 2: Payment Instructions (UPDATED) */}
         <div className="flex flex-col gap-4 lg:w-2/3 bg-[#22252a] rounded-lg p-5 shadow-md mt-5 lg:mt-0">
           <h2 className="text-2xl font-semibold mb-5 text-white">
             Instructions de Paiement
           </h2>
-          <ul className="list-decimal list-inside space-y-2 text-base text-gray-300">
-            <li>Payer via D17 20563760 ou Flouci 20563760.</li>
-            <li>Copiez le numéro d’autorisation.</li>
-            <li>Collez-le dans le champ ci-dessous.</li>
-            <li>
-              Pour les cartes recharge, joignez-les avec <code>+</code>:<br />
-              <span className="font-mono text-sm text-gray-400">
-                1ère carte + 2ème carte + 3ème carte …
-              </span>
-            </li>
-            <li>Entrez votre e-mail et téléphone, puis cliquez sur “Passer la commande”.</li>
-            <li>Notre équipe vous contactera dans les 10 minutes.</li>
-          </ul>
+          <div className="space-y-3 text-base text-gray-300">
+            <p className="font-bold text-lg text-white">⭐ Modes de paiement disponibles :</p>
+            <p><strong>📱 Applications :</strong> D17, Virement bancaire (+2 DT), Konnect, Flouci</p>
+            <p><strong>🏦 Versement bancaire :</strong> STB</p>
+            <p><strong>💳 Paiement sécurisé en ligne :</strong> Carte bancaire / e-Dinar</p>
+            <p><strong>📶 Recharge mobile :</strong> Ooredoo, Orange, Tunisie Telecom (+10% frais)</p>
+            <div className="border-t border-gray-700 my-4"></div>
+            <p className="font-bold text-lg text-white">📩 N’oubliez pas de nous contacter sur :</p>
+            
+            {/* Logos section */}
+            <div className="flex items-center gap-4 pt-2">
+                <a href="https://www.instagram.com/souktek.tn?igsh=eXViNjMybXM4bDh3" target="_blank" rel="noopener noreferrer">
+                    <img 
+                        src={`${API_BASE_URL}/uploads/1752108171595.png`} 
+                        alt="Instagram" 
+                        className="w-10 h-10 hover:opacity-80 transition-opacity" 
+                    />
+                </a>
+                <a href="https://www.facebook.com/profile.php?id=61577084570822&mibextid=ZbWKwL" target="_blank" rel="noopener noreferrer">
+                    <img 
+                        src="/images/icons/facebook.png" 
+                        alt="Facebook" 
+                        className="w-10 h-10 hover:opacity-80 transition-opacity" 
+                    />
+                </a>
+                <a href="https://wa.me/21620563760" target="_blank" rel="noopener noreferrer">
+                    <img 
+                        src="/images/icons/whatsapp.png" 
+                        alt="WhatsApp" 
+                        className="w-10 h-10 hover:opacity-80 transition-opacity"
+                    />
+                </a>
+            </div>
+          </div>
         </div>
 
         {/* Container 3: Order Summary & Customer Details Form */}

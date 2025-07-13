@@ -10,8 +10,8 @@ const AdminDashboard = () => {
   const [errorOrders, setErrorOrders] = useState(null);
 
   const [totalProducts, setTotalProducts] = useState(0);
-  const [totalIncome, setTotalIncome] = useState(0); // replaced average price
-  const [orderCount, setOrderCount] = useState(0);    // replaced most expensive
+  const [totalIncome, setTotalIncome] = useState(0);
+  const [orderCount, setOrderCount] = useState(0);
   const [mostPopular, setMostPopular] = useState({ name: 'N/A', sold: 0 });
   const [loadingStats, setLoadingStats] = useState(true);
   const [errorStats, setErrorStats] = useState(null);
@@ -169,10 +169,9 @@ const AdminDashboard = () => {
                   <tr className="bg-gray-100 text-left text-gray-600 uppercase text-sm leading-normal">
                     <th className="py-3 px-6 border-b">Order ID</th>
                     <th className="py-3 px-6 border-b">Product Name</th>
+                    <th className="py-3 px-6 border-b">Customer Name</th> {/* <-- Corrected Header */}
                     <th className="py-3 px-6 border-b">Customer Email</th>
-                    <th className="py-3 px-6 border-b">Payment Method</th>
                     <th className="py-3 px-6 border-b">Order Time</th>
-                    <th className="py-3 px-6 border-b">User ID</th>
                   </tr>
                 </thead>
                 <tbody className="text-gray-700 text-sm">
@@ -180,10 +179,9 @@ const AdminDashboard = () => {
                     <tr key={order.id} className="border-b hover:bg-gray-50">
                       <td className="py-3 px-6">{order.id}</td>
                       <td className="py-3 px-6">{order.product_name}</td>
+                      <td className="py-3 px-6">{order.full_name}</td> {/* <-- Corrected Data */}
                       <td className="py-3 px-6">{order.email}</td>
-                      <td className="py-3 px-6">{order.payment_method}</td>
                       <td className="py-3 px-6">{new Date(order.order_time).toLocaleString()}</td>
-                      <td className="py-3 px-6">{order.user_id}</td>
                     </tr>
                   ))}
                 </tbody>
