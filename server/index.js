@@ -660,6 +660,7 @@ app.post("/api/orders", async (req, res) => {
             user_created: userWasCreated,
         });
 
+
         res.status(201).json({
             message: "Order placed successfully",
             orders: insertedOrders,
