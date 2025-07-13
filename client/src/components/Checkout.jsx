@@ -116,21 +116,21 @@ const Checkout = () => {
             <div className="flex items-center gap-4 pt-2">
                 <a href="https://www.instagram.com/souktek.tn?igsh=eXViNjMybXM4bDh3" target="_blank" rel="noopener noreferrer">
                     <img 
-                        src={`${API_BASE_URL}/uploads/1752108171595.png`} 
+                        src="/uploads/1752108171595.png"
                         alt="Instagram" 
                         className="w-10 h-10 hover:opacity-80 transition-opacity" 
                     />
                 </a>
                 <a href="https://www.facebook.com/profile.php?id=61577084570822&mibextid=ZbWKwL" target="_blank" rel="noopener noreferrer">
                     <img 
-                        src="/images/icons/facebook.png" 
+                        src="/uploads/1752414597991.png" 
                         alt="Facebook" 
                         className="w-10 h-10 hover:opacity-80 transition-opacity" 
                     />
                 </a>
                 <a href="https://wa.me/21620563760" target="_blank" rel="noopener noreferrer">
                     <img 
-                        src="/images/icons/whatsapp.png" 
+                        src="/uploads/1752414042144.webp"
                         alt="WhatsApp" 
                         className="w-10 h-10 hover:opacity-80 transition-opacity"
                     />

@@ -5,6 +5,7 @@ import API_BASE_URL from "../config";
 export default function Bestsellers() {
   const [products, setProducts] = useState([]);
   const [showAllGames, setShowAllGames] = useState(false);
+  const [showAllGiftCards, setShowAllGiftCards] = useState(false); // New state for gift cards
 
   useEffect(() => {
     // Scroll to the top when the component loads
@@ -16,17 +17,26 @@ export default function Bestsellers() {
       .catch((err) => console.error("Failed to load products:", err));
   }, []);
 
-  const giftCardProducts = products.filter((product) => product.type === "gift_cards");
+  const giftCardProducts = products.filter(
+    (product) => product.type === "gift_cards"
+  );
   const gameProducts = products.filter((product) => product.type === "games");
+
+  // Determine which products to display based on state
+  const displayedGiftCards = showAllGiftCards
+    ? giftCardProducts
+    : giftCardProducts.slice(0, 10);
   const displayedGames = showAllGames ? gameProducts : gameProducts.slice(0, 5);
 
   return (
     <section className="bg-[#0e1117] text-white py-8 px-4">
       <div className="max-w-screen-xl mx-auto">
         {/* Gift Cards Section */}
-        <h2 className="text-xl font-semibold mb-4">Gift Cards and Subscriptions</h2>
+        <h2 className="text-xl font-semibold mb-4">
+          Gift Cards and Subscriptions
+        </h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6">
-          {giftCardProducts.map((product, index) => (
+          {displayedGiftCards.map((product, index) => ( // Updated to use displayedGiftCards
             <Link
               to={`/product/${encodeURIComponent(product.name)}`}
               key={index}
@@ -37,7 +47,8 @@ export default function Bestsellers() {
                   src={
                     product.img
                       ? `${API_BASE_URL}${
-                          product.img.startsWith("/images") || product.img.startsWith("/uploads")
+                          product.img.startsWith("/images") ||
+                          product.img.startsWith("/uploads")
                             ? product.img
                             : "/images/" + product.img
                         }`
@@ -47,14 +58,47 @@ export default function Bestsellers() {
                   className="object-contain w-full h-full"
                 />
               </div>
-              <div className="text-sm font-semibold truncate">{product.name}</div>
+              <div className="text-sm font-semibold truncate">
+                {product.name}
+              </div>
               <div className="text-gray-400 text-xs mt-1">{product.price}</div>
             </Link>
           ))}
         </div>
 
+        {/* Show More Button for Gift Cards */}
+        {giftCardProducts.length > 10 && (
+          <div className="flex justify-center mt-10">
+            <button
+              onClick={() => setShowAllGiftCards(!showAllGiftCards)}
+              className="px-6 py-3 bg-white text-black font-semibold rounded-full shadow-md hover:bg-gray-200 transition-all duration-300 flex items-center gap-2 group"
+            >
+              <span className="text-base">
+                {showAllGiftCards ? "Show Less" : "Show More"}
+              </span>
+              <svg
+                className={`w-5 h-5 transition-transform duration-300 group-hover:translate-x-1 ${
+                  showAllGiftCards ? "rotate-180" : ""
+                }`}
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </button>
+          </div>
+        )}
+
         {/* Games Section */}
-        <h2 className="text-xl font-semibold mt-16 mb-6">Games Keys and Accounts</h2>
+        <h2 className="text-xl font-semibold mt-16 mb-6">
+          Games Keys and Accounts
+        </h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6">
           {displayedGames.map((product, index) => (
             <Link
@@ -67,7 +111,8 @@ export default function Bestsellers() {
                   src={
                     product.img
                       ? `${API_BASE_URL}${
-                          product.img.startsWith("/images") || product.img.startsWith("/uploads")
+                          product.img.startsWith("/images") ||
+                          product.img.startsWith("/uploads")
                             ? product.img
                             : "/images/" + product.img
                         }`
@@ -77,20 +122,24 @@ export default function Bestsellers() {
                   className="object-contain w-full h-full"
                 />
               </div>
-              <div className="text-sm font-semibold truncate">{product.name}</div>
+              <div className="text-sm font-semibold truncate">
+                {product.name}
+              </div>
               <div className="text-gray-400 text-xs mt-1">{product.price}</div>
             </Link>
           ))}
         </div>
 
-        {/* Show More Button (Skine style) */}
-        {gameProducts.length > 5 && (
+        {/* Show More Button for Games */}
+        {gameProducts.length > 6 && ( // Corrected the condition to 5 to match the slice
           <div className="flex justify-center mt-10">
             <button
               onClick={() => setShowAllGames(!showAllGames)}
               className="px-6 py-3 bg-white text-black font-semibold rounded-full shadow-md hover:bg-gray-200 transition-all duration-300 flex items-center gap-2 group"
             >
-              <span className="text-base">{showAllGames ? "Show Less" : "Show More"}</span>
+              <span className="text-base">
+                {showAllGames ? "Show Less" : "Show More"}
+              </span>
               <svg
                 className={`w-5 h-5 transition-transform duration-300 group-hover:translate-x-1 ${
                   showAllGames ? "rotate-180" : ""
@@ -100,7 +149,11 @@ export default function Bestsellers() {
                 strokeWidth="2"
                 viewBox="0 0 24 24"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M19 9l-7 7-7-7"
+                />
               </svg>
             </button>
           </div>
@@ -119,7 +172,8 @@ export default function Bestsellers() {
             <div className="text-3xl mb-2">⭐</div>
             <h3 className="font-semibold text-lg">Trusted Online Store</h3>
             <p className="text-gray-400 text-sm mt-1">
-              Our store is recommended by TrustPilot users for digital purchases.
+              Our store is recommended by TrustPilot users for digital
+              purchases.
             </p>
           </div>
           <div>
