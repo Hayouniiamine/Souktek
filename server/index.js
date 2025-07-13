@@ -70,23 +70,24 @@ const transporter = nodemailer.createTransport({
 
 const ADMIN_NOTIFICATION_EMAIL = process.env.ADMIN_NOTIFICATION_EMAIL || 'souktek.tn@gmail.com';
 
+// UPDATED to be compatible with the new checkout form
 const sendOrderNotificationEmail = async (orderDetails) => {
+  // Destructuring now includes full_name and removes old fields
   const {
     orderId,
-    products,              // Expecting an array of { product_name, quantity }
-    payment_method,
+    products,
+    full_name,
     email,
     phone,
-    transaction_number,
     order_time,
     user_created
   } = orderDetails;
 
-  // Build an HTML list of products
   const productsHtml = products && products.length > 0
     ? `<ul>${products.map(p => `<li>${p.product_name} ${p.quantity ? `(Qty: ${p.quantity})` : ''}</li>`).join('')}</ul>`
     : '<p>No products listed.</p>';
 
+  // The email template now includes the customer's full name
   const mailOptions = {
     from: `"Souktek Store" <${process.env.EMAIL_USER}>`,
     to: ADMIN_NOTIFICATION_EMAIL,
@@ -96,17 +97,14 @@ const sendOrderNotificationEmail = async (orderDetails) => {
         <h2 style="color: #4CAF50;">New Order Notification</h2>
         <p>A new order has been successfully placed on your store!</p>
         <p><strong>Order ID:</strong> ${orderId}</p>
-        <p><strong>Products Ordered:</strong></p>
-        ${productsHtml}
-        <p><strong>Payment Method:</strong> ${payment_method}</p>
+        <p><strong>Customer Name:</strong> ${full_name}</p>
         <p><strong>Customer Email:</strong> ${email}</p>
         <p><strong>Customer Phone:</strong> ${phone || 'N/A'}</p>
-        <p><strong>Transaction Number:</strong> ${transaction_number || 'N/A'}</p>
-        <p><strong>Order Time:</strong> ${new Date(order_time).toLocaleString()}</p>
+        <p><strong>Products Ordered:</strong></p>
+        ${productsHtml}
+        <p><strong>Order Time:</strong> ${new Date(order_time || Date.now()).toLocaleString()}</p>
         ${user_created ? '<p style="color: #007bff;"><strong>Note: A new user account was automatically created for this customer.</strong></p>' : ''}
         <p>Please log in to your admin dashboard to view full details.</p>
-        <p>Thank you,</p>
-        <p>Souktek Store Team</p>
       </div>
     `,
   };
@@ -582,109 +580,102 @@ app.get("/api/orders/user/:email", verifyToken, async (req, res) => {
   }
 });
 
-// Order placement route with automatic user creation and product_id
+// Order placement route - UPDATED to be compatible with the new checkout form
 app.post("/api/orders", async (req, res) => {
-  const { products, payment_method, email, phone, transaction_number } = req.body;
+    // Destructuring now includes full_name and removes old fields
+    const { products, full_name, email, phone } = req.body;
 
-  if (
-    !Array.isArray(products) || products.length === 0 ||
-    !email || !payment_method
-  ) {
-    return res.status(400).json({
-      message: "Missing required order information or empty products array",
-    });
-  }
-
-  const normalizedEmail = email.trim().toLowerCase();
-
-  let client;
-  try {
-    client = await pool.connect();
-    await client.query("BEGIN");
-
-    // Check if user exists or create
-    let userId;
-    let userWasCreated = false;
-
-    const userCheckResult = await client.query(
-      "SELECT id FROM users WHERE email = $1",
-      [normalizedEmail]
-    );
-
-    if (userCheckResult.rows.length === 0) {
-      const randomPassword = Math.random().toString(36).slice(-10);
-      const hashedPassword = await bcrypt.hash(randomPassword, 10);
-      const username = normalizedEmail.split('@')[0] || "Customer";
-
-      const newUserResult = await client.query(
-        "INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING id",
-        [username, normalizedEmail, hashedPassword]
-      );
-
-      userId = newUserResult.rows[0].id;
-      userWasCreated = true;
-    } else {
-      userId = userCheckResult.rows[0].id;
+    // Updated validation to check for full_name and remove payment_method
+    if (
+        !Array.isArray(products) || products.length === 0 ||
+        !full_name || !email
+    ) {
+        return res.status(400).json({
+            message: "Missing required order information. Products, full name, and email are required.",
+        });
     }
 
-    // Insert all orders in one go
-    const insertedOrders = [];
+    const normalizedEmail = email.trim().toLowerCase();
+    let client;
 
-    for (const product of products) {
-      if (!product.product_id || !product.product_name) {
-        await client.query("ROLLBACK");
-        return res.status(400).json({ message: "Each product must have product_id and product_name" });
-      }
+    try {
+        client = await pool.connect();
+        await client.query("BEGIN");
 
-      const orderResult = await client.query(
-        `INSERT INTO orders (user_id, product_id, product_name, payment_method, email, phone, transaction_number, order_time)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
-         RETURNING *`,
-        [
-          userId,
-          product.product_id,
-          product.product_name,
-          payment_method,
-          normalizedEmail,
-          phone || null,
-          transaction_number || null,
-        ]
-      );
-      insertedOrders.push(orderResult.rows[0]);
+        // Check if user exists or create them
+        let userId;
+        let userWasCreated = false;
+        const userCheckResult = await client.query(
+            "SELECT id FROM users WHERE email = $1",
+            [normalizedEmail]
+        );
+
+        if (userCheckResult.rows.length === 0) {
+            const randomPassword = Math.random().toString(36).slice(-10);
+            const hashedPassword = await bcrypt.hash(randomPassword, 10);
+            
+            const newUserResult = await client.query(
+                "INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING id",
+                [full_name, normalizedEmail, hashedPassword] // Use full_name as the initial username
+            );
+            userId = newUserResult.rows[0].id;
+            userWasCreated = true;
+        } else {
+            userId = userCheckResult.rows[0].id;
+        }
+
+        const insertedOrders = [];
+        for (const product of products) {
+            if (!product.product_id || !product.product_name) {
+                await client.query("ROLLBACK");
+                return res.status(400).json({ message: "Each product must have product_id and product_name" });
+            }
+
+            // The INSERT query now includes full_name and removes payment_method/transaction_number
+            const orderResult = await client.query(
+                `INSERT INTO orders (user_id, product_id, product_name, full_name, email, phone, order_time)
+                 VALUES ($1, $2, $3, $4, $5, $6, NOW())
+                 RETURNING *`,
+                [
+                    userId,
+                    product.product_id,
+                    product.product_name,
+                    full_name, // Save the full name
+                    normalizedEmail,
+                    phone || null,
+                ]
+            );
+            insertedOrders.push(orderResult.rows[0]);
+        }
+
+        await client.query("COMMIT");
+
+        // Send a single notification email with all ordered products
+        await sendOrderNotificationEmail({
+            orderId: insertedOrders.map(o => o.id).join(", "),
+            products: insertedOrders,
+            full_name: full_name, // Pass full_name to the email function
+            email: normalizedEmail,
+            phone,
+            user_created: userWasCreated,
+        });
+
+        res.status(201).json({
+            message: "Order placed successfully",
+            orders: insertedOrders,
+            user_created: userWasCreated,
+        });
+
+    } catch (err) {
+        if (client) {
+            await client.query("ROLLBACK");
+        }
+        console.error("Error processing order:", err);
+        res.status(500).json({ message: "Error processing order. Please try again." });
+    } finally {
+        if (client) client.release();
     }
-
-    await client.query("COMMIT");
-
-    // Compose a single notification email with all ordered products
-    await sendOrderNotificationEmail({
-      orderId: insertedOrders.map(o => o.id).join(", "),
-      products: insertedOrders,
-      payment_method,
-      email: normalizedEmail,
-      phone,
-      transaction_number,
-      user_created: userWasCreated,
-    });
-
-    res.status(201).json({
-      message: "Order placed successfully",
-      orders: insertedOrders,
-      user_created: userWasCreated,
-    });
-  } catch (err) {
-    if (client) {
-      await client.query("ROLLBACK");
-    }
-    console.error("Error processing order:", err);
-    res.status(500).json({ message: "Error processing order. Please try again." });
-  } finally {
-    if (client) client.release();
-  }
 });
-
-
-
-
 
 // ---------------------------
 // USER AUTHENTICATION ROUTES
@@ -805,7 +796,7 @@ pool.connect()
   })
   .catch(err => {
     console.error('❌  DB connection error:', err.message || err);
-    // optional: process.exit(1);    // crash app so Railway restarts until env is fixed
+    // optional: process.exit(1);      // crash app so Railway restarts until env is fixed
   });
 // -------------------------------------------------------------------
 
