@@ -8,12 +8,26 @@ const CreateProduct = () => {
   const [price, setPrice] = useState('');
   const [description, setDescription] = useState('');
   const [image, setImage] = useState(null);
-  const [type, setType] = useState('gift_cards');
+
+  // Change type to array to hold multiple selected types
+  const [type, setType] = useState(['gift_cards']); // default selected
 
   const [options, setOptions] = useState([]);
   const [newOptionLabel, setNewOptionLabel] = useState('');
   const [newOptionPrice, setNewOptionPrice] = useState('');
   const [newOptionDescription, setNewOptionDescription] = useState('');
+
+  const productTypes = [
+    { value: 'gift_cards', label: 'Gift Card' },
+    { value: 'games', label: 'Game' },
+    // add more types if needed
+  ];
+
+  const toggleType = (value) => {
+    setType((prev) =>
+      prev.includes(value) ? prev.filter((t) => t !== value) : [...prev, value]
+    );
+  };
 
   const addOption = () => {
     if (!newOptionLabel || !newOptionPrice || !newOptionDescription) {
@@ -44,8 +58,11 @@ const CreateProduct = () => {
     formData.append('name', name);
     formData.append('price', price);
     formData.append('description', description);
-    formData.append('type', type);
     if (image) formData.append('image', image);
+
+    // send type as JSON stringified array
+    formData.append('type', JSON.stringify(type));
+
     formData.append('options', JSON.stringify(options));
 
     try {
@@ -58,13 +75,13 @@ const CreateProduct = () => {
 
       const response = await fetch(`${API_BASE_URL}/api/products`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
 
       if (response.ok) {
         alert('Product created successfully!');
-        navigate('/admin-dashboard'); // 🔁 redirect here
+        navigate('/admin-dashboard');
       } else {
         const errorData = await response.json();
         alert(`Failed to create product: ${errorData.message}`);
@@ -76,8 +93,8 @@ const CreateProduct = () => {
   };
 
   const inputClass =
-    "w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-black placeholder-black";
-  const labelClass = "block text-black text-sm font-bold mb-1";
+    'w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-black placeholder-black';
+  const labelClass = 'block text-black text-sm font-bold mb-1';
 
   return (
     <div className="min-h-screen bg-gray-100 p-6 flex items-center justify-center">
@@ -88,7 +105,9 @@ const CreateProduct = () => {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Name */}
           <div>
-            <label htmlFor="name" className={labelClass}>Product Name</label>
+            <label htmlFor="name" className={labelClass}>
+              Product Name
+            </label>
             <input
               type="text"
               id="name"
@@ -102,7 +121,9 @@ const CreateProduct = () => {
 
           {/* Price Range */}
           <div>
-            <label htmlFor="price" className={labelClass}>Price Range</label>
+            <label htmlFor="price" className={labelClass}>
+              Price Range
+            </label>
             <input
               type="text"
               id="price"
@@ -116,7 +137,9 @@ const CreateProduct = () => {
 
           {/* Description */}
           <div>
-            <label htmlFor="description" className={labelClass}>Description</label>
+            <label htmlFor="description" className={labelClass}>
+              Description
+            </label>
             <textarea
               id="description"
               className={inputClass}
@@ -130,7 +153,9 @@ const CreateProduct = () => {
 
           {/* Image Upload */}
           <div>
-            <label htmlFor="image" className={labelClass}>Product Image</label>
+            <label htmlFor="image" className={labelClass}>
+              Product Image
+            </label>
             <input
               type="file"
               id="image"
@@ -139,19 +164,25 @@ const CreateProduct = () => {
             />
           </div>
 
-          {/* Product Type */}
+          {/* Product Type - Multiple Checkboxes */}
           <div>
-            <label htmlFor="type" className={labelClass}>Product Type</label>
-            <select
-              id="type"
-              className={inputClass}
-              value={type}
-              onChange={(e) => setType(e.target.value)}
-            >
-              <option value="gift_cards">Gift Card</option>
-              <option value="games">Game</option>
-              {/* Removed software as requested */}
-            </select>
+            <label className={labelClass}>Product Type</label>
+            <div className="flex space-x-6">
+              {productTypes.map(({ value, label }) => (
+                <label
+                  key={value}
+                  className="flex items-center space-x-2 text-black cursor-pointer"
+                >
+                  <input
+                    type="checkbox"
+                    checked={type.includes(value)}
+                    onChange={() => toggleType(value)}
+                    className="form-checkbox"
+                  />
+                  <span>{label}</span>
+                </label>
+              ))}
+            </div>
           </div>
 
           {/* Product Options */}
@@ -159,7 +190,10 @@ const CreateProduct = () => {
             <h2 className="text-2xl font-bold text-black mb-4">Product Options</h2>
 
             {options.map((option, index) => (
-              <div key={index} className="flex items-center justify-between bg-gray-50 p-3 rounded-lg mb-3">
+              <div
+                key={index}
+                className="flex items-center justify-between bg-gray-50 p-3 rounded-lg mb-3"
+              >
                 <div>
                   <p className="font-semibold text-black">{option.label}</p>
                   <p className="text-sm text-gray-700">
@@ -177,7 +211,9 @@ const CreateProduct = () => {
             ))}
 
             <div className="mt-4 p-4 border border-dashed border-gray-300 rounded-lg bg-gray-50">
-              <h3 className="text-xl font-semibold text-black mb-3">Add New Option</h3>
+              <h3 className="text-xl font-semibold text-black mb-3">
+                Add New Option
+              </h3>
 
               <div className="mb-4">
                 <label className={labelClass}>Option Label</label>
