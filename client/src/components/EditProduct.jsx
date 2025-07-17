@@ -11,7 +11,7 @@ const EditProduct = () => {
     price: "",
     img: "",
     description: "",
-    type: "",
+    type: [], // changed to array to store multiple types
   });
   const [options, setOptions] = useState([]);
   const [image, setImage] = useState(null);
@@ -26,7 +26,12 @@ const EditProduct = () => {
         const productRes = await fetch(`${API_BASE_URL}/api/products/${id}`);
         if (!productRes.ok) throw new Error("Product not found");
         const productData = await productRes.json();
-        setProduct(productData);
+
+        // Ensure type is array (it comes as array from backend)
+        setProduct({
+          ...productData,
+          type: Array.isArray(productData.type) ? productData.type : [],
+        });
 
         const optionsRes = await fetch(`${API_BASE_URL}/api/product_options/${id}`);
         if (!optionsRes.ok) throw new Error("Failed to load options");
@@ -55,6 +60,20 @@ const EditProduct = () => {
   const handleProductChange = (e) => {
     const { name, value } = e.target;
     setProduct((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // New handler for checkbox toggle
+  const handleTypeToggle = (typeValue) => {
+    setProduct((prev) => {
+      const currentTypes = prev.type || [];
+      if (currentTypes.includes(typeValue)) {
+        // Remove type
+        return { ...prev, type: currentTypes.filter((t) => t !== typeValue) };
+      } else {
+        // Add type
+        return { ...prev, type: [...currentTypes, typeValue] };
+      }
+    });
   };
 
   const handleOptionChange = (optionId, field, value) => {
@@ -102,6 +121,12 @@ const EditProduct = () => {
     e.preventDefault();
     setError(null);
 
+    // Validation: at least one type selected
+    if (!product.type || product.type.length === 0) {
+      alert("Please select at least one product type.");
+      return;
+    }
+
     const token = localStorage.getItem("token");
     if (!token) {
       alert("Authentication token missing. Please log in.");
@@ -113,7 +138,7 @@ const EditProduct = () => {
     productFormData.append("name", product.name);
     productFormData.append("price", product.price);
     productFormData.append("description", product.description);
-    productFormData.append("type", product.type);
+    productFormData.append("type", JSON.stringify(product.type)); // send as JSON string
     if (image) productFormData.append("image", image);
 
     try {
@@ -212,15 +237,29 @@ const EditProduct = () => {
               />
             </div>
 
+            {/* === New Types checkboxes === */}
             <div className="mb-4">
               <label className="block font-semibold text-black mb-1">Product Type</label>
-              <input
-                type="text"
-                name="type"
-                value={product.type}
-                onChange={handleProductChange}
-                className={inputClass}
-              />
+
+              {product.type.includes("top") && (
+                <p className="text-sm mb-2 text-indigo-700 font-semibold">
+                  When you add "top" as a type it appears above.
+                </p>
+              )}
+
+              <div className="flex gap-4">
+                {["games", "gift_cards", "top"].map((typeValue) => (
+                  <label key={typeValue} className="inline-flex items-center gap-2 text-black select-none">
+                    <input
+                      type="checkbox"
+                      checked={product.type.includes(typeValue)}
+                      onChange={() => handleTypeToggle(typeValue)}
+                      className="w-5 h-5"
+                    />
+                    <span className="capitalize">{typeValue.replace('_', ' ')}</span>
+                  </label>
+                ))}
+              </div>
             </div>
 
             <div className="mb-4">

@@ -8,9 +8,13 @@ const ProductCard = ({ product, isactive }) => {
 
   return (
     <div 
-      className={`w-full h-full absolute transition-transform duration-500 ease-in-out ${isactive ? 'opacity-100' : 'opacity-60 scale-90'}`}
+      className={`w-full h-full absolute transition-all duration-500 ease-in-out ${isactive ? 'opacity-100' : 'opacity-60 scale-90'}`}
     >
       <div className="bg-[#1a1d23] rounded-2xl overflow-hidden shadow-2xl h-full flex flex-col group">
+        {/* Hot Icon */}
+        <div className="absolute top-3 left-3 bg-red-600/90 text-white text-2xl p-2 rounded-full shadow-lg z-10">
+          🔥
+        </div>
         <div className="relative overflow-hidden h-2/3">
           <img
             src={`${API_BASE_URL}${
@@ -23,11 +27,11 @@ const ProductCard = ({ product, isactive }) => {
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
         </div>
-        <div className="p-6 flex flex-col flex-grow justify-center text-center">
-          <h3 className="text-white text-2xl font-bold truncate mb-4">{product.name}</h3>
+        <div className="p-4 flex flex-col flex-grow justify-center text-center">
+          <h3 className="text-white text-xl font-bold truncate mb-3">{product.name}</h3>
           <Link 
             to={`/product/${encodeURIComponent(product.name)}`} 
-            className="bg-white text-black font-bold py-2 px-6 rounded-full self-center group-hover:bg-yellow-400 transition-colors duration-300"
+            className="bg-white text-black font-bold py-2 px-5 rounded-full self-center group-hover:bg-yellow-400 transition-colors duration-300"
           >
             View Details
           </Link>
@@ -59,45 +63,49 @@ const ProductSlideshow = ({ products }) => {
     return null;
   }
   
-  const radius = 250; // Controls the size of the circle (in px)
+  // Reduced radius and card sizes for a more compact look
+  const radius = 200; 
   const angleStep = 360 / products.length;
 
   return (
-    <div className="h-[450px] w-full flex flex-col items-center justify-center mb-16">
-      <div className="relative w-full h-full" style={{ perspective: '1000px' }}>
-        <div 
-          className="absolute w-full h-full"
-          style={{
-            transformStyle: 'preserve-3d',
-            transform: `rotateY(${-currentIndex * angleStep}deg)`,
-            transition: 'transform 0.8s cubic-bezier(0.77, 0, 0.175, 1)',
-          }}
-        >
-          {products.map((product, index) => {
-            const angle = index * angleStep;
-            return (
-              <div
-                key={product.id}
-                className="absolute w-64 h-96 top-1/2 left-1/2 -mt-48 -ml-32"
-                style={{
-                  transform: `rotateY(${angle}deg) translateZ(${radius}px)`,
-                }}
-              >
-                <ProductCard product={product} isactive={currentIndex === index} />
-              </div>
-            );
-          })}
+    <div className="w-full flex flex-col items-center justify-center mb-16">
+        {/* Main carousel container */}
+        <div className="relative h-[350px] w-full" style={{ perspective: '1000px' }}>
+            <div 
+              className="absolute w-full h-full"
+              style={{
+                transformStyle: 'preserve-3d',
+                transform: `rotateY(${-currentIndex * angleStep}deg)`,
+                transition: 'transform 0.8s cubic-bezier(0.77, 0, 0.175, 1)',
+              }}
+            >
+              {products.map((product, index) => {
+                const angle = index * angleStep;
+                return (
+                  <div
+                    key={product.id}
+                    // Adjusted card dimensions and positioning
+                    className="absolute w-56 h-80 top-1/2 left-1/2 -mt-40 -ml-28" 
+                    style={{
+                      transform: `rotateY(${angle}deg) translateZ(${radius}px)`,
+                    }}
+                  >
+                    <ProductCard product={product} isactive={currentIndex === index} />
+                  </div>
+                );
+              })}
+            </div>
         </div>
-      </div>
-       {/* Navigation Buttons */}
-       <div className="flex gap-8 mt-8">
-        <button onClick={goToPrevious} className="px-6 py-2 bg-white text-black font-semibold rounded-full shadow-md hover:bg-gray-200 transition-all duration-300">
-          Previous
-        </button>
-        <button onClick={goToNext} className="px-6 py-2 bg-white text-black font-semibold rounded-full shadow-md hover:bg-gray-200 transition-all duration-300">
-          Next
-        </button>
-      </div>
+
+       {/* Navigation Buttons are now outside the carousel container */}
+       <div className="flex gap-8 mt-4 z-20">
+            <button onClick={goToPrevious} className="px-6 py-2 bg-white text-black font-semibold rounded-full shadow-md hover:bg-gray-200 transition-all duration-300">
+              Previous
+            </button>
+            <button onClick={goToNext} className="px-6 py-2 bg-white text-black font-semibold rounded-full shadow-md hover:bg-gray-200 transition-all duration-300">
+              Next
+            </button>
+        </div>
     </div>
   );
 };
@@ -267,7 +275,7 @@ export default function Bestsellers() {
             <div className="text-3xl mb-2">📧</div>
             <h3 className="font-semibold text-lg"> Email delivery</h3>
             <p className="text-gray-400 text-sm mt-1">
-              Your digital Giftcard is ready to use within 10 minutes.
+              Your digital Gift card is ready to use within 10 minutes.
             </p>
           </div>
           <div>

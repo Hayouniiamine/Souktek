@@ -8,12 +8,19 @@ const CreateProduct = () => {
   const [price, setPrice] = useState('');
   const [description, setDescription] = useState('');
   const [image, setImage] = useState(null);
-  const [type, setType] = useState('gift_cards');
+  const [selectedTypes, setSelectedTypes] = useState([]);
 
   const [options, setOptions] = useState([]);
   const [newOptionLabel, setNewOptionLabel] = useState('');
   const [newOptionPrice, setNewOptionPrice] = useState('');
   const [newOptionDescription, setNewOptionDescription] = useState('');
+
+  const handleTypeChange = (e) => {
+    const { value, checked } = e.target;
+    setSelectedTypes((prev) =>
+      checked ? [...prev, value] : prev.filter((type) => type !== value)
+    );
+  };
 
   const addOption = () => {
     if (!newOptionLabel || !newOptionPrice || !newOptionDescription) {
@@ -40,11 +47,16 @@ const CreateProduct = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (selectedTypes.length === 0) {
+      alert('Please select at least one product type.');
+      return;
+    }
+
     const formData = new FormData();
     formData.append('name', name);
     formData.append('price', price);
     formData.append('description', description);
-    formData.append('type', type);
+    formData.append('type', JSON.stringify(selectedTypes));
     if (image) formData.append('image', image);
     formData.append('options', JSON.stringify(options));
 
@@ -58,13 +70,13 @@ const CreateProduct = () => {
 
       const response = await fetch(`${API_BASE_URL}/api/products`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
 
       if (response.ok) {
         alert('Product created successfully!');
-        navigate('/admin-dashboard'); // 🔁 redirect here
+        navigate('/admin-dashboard');
       } else {
         const errorData = await response.json();
         alert(`Failed to create product: ${errorData.message}`);
@@ -76,8 +88,8 @@ const CreateProduct = () => {
   };
 
   const inputClass =
-    "w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-black placeholder-black";
-  const labelClass = "block text-black text-sm font-bold mb-1";
+    'w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-black placeholder-black';
+  const labelClass = 'block text-black text-sm font-bold mb-1';
 
   return (
     <div className="min-h-screen bg-gray-100 p-6 flex items-center justify-center">
@@ -88,7 +100,9 @@ const CreateProduct = () => {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Name */}
           <div>
-            <label htmlFor="name" className={labelClass}>Product Name</label>
+            <label htmlFor="name" className={labelClass}>
+              Product Name
+            </label>
             <input
               type="text"
               id="name"
@@ -100,9 +114,11 @@ const CreateProduct = () => {
             />
           </div>
 
-          {/* Price Range */}
+          {/* Price */}
           <div>
-            <label htmlFor="price" className={labelClass}>Price Range</label>
+            <label htmlFor="price" className={labelClass}>
+              Price Range
+            </label>
             <input
               type="text"
               id="price"
@@ -116,7 +132,9 @@ const CreateProduct = () => {
 
           {/* Description */}
           <div>
-            <label htmlFor="description" className={labelClass}>Description</label>
+            <label htmlFor="description" className={labelClass}>
+              Description
+            </label>
             <textarea
               id="description"
               className={inputClass}
@@ -130,7 +148,9 @@ const CreateProduct = () => {
 
           {/* Image Upload */}
           <div>
-            <label htmlFor="image" className={labelClass}>Product Image</label>
+            <label htmlFor="image" className={labelClass}>
+              Product Image
+            </label>
             <input
               type="file"
               id="image"
@@ -139,31 +159,40 @@ const CreateProduct = () => {
             />
           </div>
 
-          {/* Product Type */}
+          {/* Type Checkboxes */}
           <div>
-            <label htmlFor="type" className={labelClass}>Product Type</label>
-            <select
-              id="type"
-              className={inputClass}
-              value={type}
-              onChange={(e) => setType(e.target.value)}
-            >
-              <option value="gift_cards">Gift Card</option>
-              <option value="games">Game</option>
-              {/* Removed software as requested */}
-            </select>
+            <label className={labelClass}>Product Types</label>
+            <div className="flex gap-4">
+              {['gift_cards', 'games', 'top'].map((type) => (
+                <label key={type} className="flex items-center gap-2 text-black">
+                  <input
+                    type="checkbox"
+                    value={type}
+                    checked={selectedTypes.includes(type)}
+                    onChange={handleTypeChange}
+                  />
+                  {type.replace('_', ' ').toUpperCase()}
+                </label>
+              ))}
+            </div>
           </div>
 
           {/* Product Options */}
           <div className="border-t pt-6 mt-6 border-gray-200">
-            <h2 className="text-2xl font-bold text-black mb-4">Product Options</h2>
+            <h2 className="text-2xl font-bold text-black mb-4">
+              Product Options
+            </h2>
 
             {options.map((option, index) => (
-              <div key={index} className="flex items-center justify-between bg-gray-50 p-3 rounded-lg mb-3">
+              <div
+                key={index}
+                className="flex items-center justify-between bg-gray-50 p-3 rounded-lg mb-3"
+              >
                 <div>
                   <p className="font-semibold text-black">{option.label}</p>
                   <p className="text-sm text-gray-700">
-                    DT {parseFloat(option.price).toFixed(2)} - {option.description}
+                    DT {parseFloat(option.price).toFixed(2)} -{' '}
+                    {option.description}
                   </p>
                 </div>
                 <button
@@ -177,7 +206,9 @@ const CreateProduct = () => {
             ))}
 
             <div className="mt-4 p-4 border border-dashed border-gray-300 rounded-lg bg-gray-50">
-              <h3 className="text-xl font-semibold text-black mb-3">Add New Option</h3>
+              <h3 className="text-xl font-semibold text-black mb-3">
+                Add New Option
+              </h3>
 
               <div className="mb-4">
                 <label className={labelClass}>Option Label</label>

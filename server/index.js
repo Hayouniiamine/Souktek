@@ -295,12 +295,9 @@ app.get("/api/product_options/:productId", async (req, res) => {
     res.status(500).json({ message: "Error fetching product options" });
   }
 });
-// -----------------------------------------------------------------------------------------------------------------------------------------------------
-
 // Create a new product (ADMIN ONLY)
 app.post("/api/products", authorizeAdmin, upload.single("image"), async (req, res) => {
   const { name, price, description, type, options } = req.body;
-  // CORRECTED: Use the full public path for the image
   const image = req.file ? `/uploads/${req.file.filename}` : '';
 
   // Validate required fields
@@ -310,7 +307,7 @@ app.post("/api/products", authorizeAdmin, upload.single("image"), async (req, re
     });
   }
 
-  // Optional: Validate price format (since now it's a string range like "5.00 - 50.00")
+  // Validate price format (e.g., "5.00 - 50.00")
   const priceRegex = /^\d+(\.\d{2})?\s*-\s*\d+(\.\d{2})?$/;
   if (typeof price !== 'string' || !priceRegex.test(price)) {
     return res.status(400).json({
@@ -318,11 +315,20 @@ app.post("/api/products", authorizeAdmin, upload.single("image"), async (req, re
     });
   }
 
-  // Parse options
+  // Parse type array (from stringified JSON or plain array)
+  let parsedType;
+  try {
+    parsedType = typeof type === 'string' ? JSON.parse(type) : type;
+    if (!Array.isArray(parsedType)) throw new Error("Type must be an array");
+  } catch (err) {
+    return res.status(400).json({ message: "Invalid type format. Must be a JSON array." });
+  }
+
+  // Parse options (if provided)
   let parsedOptions = [];
   if (options) {
     try {
-      parsedOptions = JSON.parse(options);
+      parsedOptions = typeof options === 'string' ? JSON.parse(options) : options;
       if (!Array.isArray(parsedOptions)) throw new Error("Options must be an array");
     } catch (err) {
       return res.status(400).json({ message: "Invalid options format" });
@@ -337,7 +343,7 @@ app.post("/api/products", authorizeAdmin, upload.single("image"), async (req, re
     // Insert product
     const productResult = await client.query(
       "INSERT INTO products (name, price, description, img, type) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-      [name, price, description, image, type]
+      [name, price, description, image, parsedType] // type as array
     );
 
     const productId = productResult.rows[0].id;
@@ -345,7 +351,6 @@ app.post("/api/products", authorizeAdmin, upload.single("image"), async (req, re
     // Insert product options
     for (const opt of parsedOptions) {
       const { label, price: optPrice, description: optDesc } = opt;
-
       if (!label || optPrice === undefined || optDesc === undefined) {
         await client.query("ROLLBACK");
         return res.status(400).json({
@@ -376,7 +381,7 @@ app.post("/api/products", authorizeAdmin, upload.single("image"), async (req, re
     client.release();
   }
 });
-// -----------------------------------------------------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------------------------------------
 
 //-------------------------------Delete a product by ID (ADMIN ONLY)------------------------------------------------------------------------------------
 app.delete("/api/products/:id", authorizeAdmin, async (req, res) => {
@@ -400,7 +405,9 @@ app.delete("/api/products/:id", authorizeAdmin, async (req, res) => {
   }
 });
 
-//--------------------------------------------------------------------------------- Update product and all its options together (ADMIN ONLY)---------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------
+// Update product and all its options together (ADMIN ONLY)
+//---------------------------------------------------------------------------------
 app.put("/api/products/:id", authorizeAdmin, upload.single("image"), async (req, res) => {
   const { id } = req.params;
   const { name, price, description, type, options } = req.body;
@@ -409,17 +416,27 @@ app.put("/api/products/:id", authorizeAdmin, upload.single("image"), async (req,
     return res.status(400).json({ message: "Name, price, description, and type are required" });
   }
 
+  // Parse type JSON string to array
+  let parsedType;
+  try {
+    parsedType = typeof type === 'string' ? JSON.parse(type) : type;
+    if (!Array.isArray(parsedType)) throw new Error("Type must be an array");
+  } catch {
+    return res.status(400).json({ message: "Invalid type format. Must be a JSON array." });
+  }
+
+  // Parse options array from JSON string if provided
   let parsedOptions = [];
   if (options) {
     try {
-      parsedOptions = JSON.parse(options);
+      parsedOptions = typeof options === 'string' ? JSON.parse(options) : options;
       if (!Array.isArray(parsedOptions)) throw new Error("Options must be an array");
     } catch {
       return res.status(400).json({ message: "Invalid options format" });
     }
   }
 
-  // CORRECTED: Use the full public path for the image file
+  // Use full public path for image file if uploaded
   const imageFile = req.file ? `/uploads/${req.file.filename}` : null;
   const client = await pool.connect();
 
@@ -432,11 +449,11 @@ app.put("/api/products/:id", authorizeAdmin, upload.single("image"), async (req,
     if (imageFile) {
       updateProductQuery =
         "UPDATE products SET name = $1, price = $2, description = $3, img = $4, type = $5 WHERE id = $6 RETURNING *";
-      updateProductValues = [name, price, description, imageFile, type, id];
+      updateProductValues = [name, price, description, imageFile, parsedType, id];
     } else {
       updateProductQuery =
         "UPDATE products SET name = $1, price = $2, description = $3, type = $4 WHERE id = $5 RETURNING *";
-      updateProductValues = [name, price, description, type, id];
+      updateProductValues = [name, price, description, parsedType, id];
     }
 
     const productResult = await client.query(updateProductQuery, updateProductValues);
@@ -446,6 +463,7 @@ app.put("/api/products/:id", authorizeAdmin, upload.single("image"), async (req,
       return res.status(404).json({ message: "Product not found" });
     }
 
+    // Update each option
     for (const opt of parsedOptions) {
       const { id: optionId, label, price: optionPrice, description: optionDesc } = opt;
 
@@ -485,7 +503,8 @@ app.put("/api/products/:id", authorizeAdmin, upload.single("image"), async (req,
 });
 
 
-//----------------------------- Update a single product option by its ID (ADMIN ONLY)-------------------------
+//-----------------------------//-----------------------------//-----------------------------//-----------------------------//-----------------------------
+//----------------------------- Update a single product option by its ID (ADMIN ONLY)--------------------------------------------------------------------------------------------
 app.put("/api/product_options/:id", authorizeAdmin, async (req, res) => {
   const { id } = req.params;
   const { label, price, description } = req.body;
