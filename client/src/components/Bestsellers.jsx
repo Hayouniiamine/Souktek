@@ -2,70 +2,94 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import API_BASE_URL from "../config";
 
-// New Slideshow Component
+// New: A modern, responsive product card for the slideshow
+const ProductCard = ({ product }) => {
+  if (!product) return null;
+
+  return (
+    <div className="flex-shrink-0 w-full max-w-sm mx-auto">
+      <div className="bg-[#1a1d23] rounded-2xl overflow-hidden shadow-2xl h-full flex flex-col group">
+        <div className="relative overflow-hidden h-64">
+          <img
+            src={`${API_BASE_URL}${
+              product.img.startsWith("/images") || product.img.startsWith("/uploads")
+                ? product.img
+                : "/images/" + product.img
+            }`}
+            alt={product.name}
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ease-out"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+          <div className="absolute top-4 right-4 bg-yellow-400 text-black text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+            Featured
+          </div>
+        </div>
+
+        <div className="p-6 flex flex-col flex-grow">
+          <h3 className="text-white text-2xl font-bold truncate mb-2">{product.name}</h3>
+          <p className="text-gray-400 text-sm flex-grow mb-6 line-clamp-2">{product.description}</p>
+          <div className="flex justify-between items-center mt-auto">
+            <p className="text-2xl font-semibold text-white">{product.price}</p>
+            <Link 
+              to={`/product/${encodeURIComponent(product.name)}`} 
+              className="bg-white text-black font-bold py-2 px-6 rounded-full group-hover:bg-yellow-400 transition-colors duration-300"
+            >
+              View
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
+// Enhanced Slideshow Component
 const ProductSlideshow = ({ products }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  const goToPrevious = () => {
-    const isFirstSlide = currentIndex === 0;
-    const newIndex = isFirstSlide ? products.length - 1 : currentIndex - 1;
-    setCurrentIndex(newIndex);
+  const goToSlide = (index) => {
+    setCurrentIndex(index);
   };
 
-  const goToNext = () => {
-    const isLastSlide = currentIndex === products.length - 1;
-    const newIndex = isLastSlide ? 0 : currentIndex + 1;
-    setCurrentIndex(newIndex);
-  };
-  
-  // Automatically advance the slideshow every 5 seconds
   useEffect(() => {
-    const slideInterval = setInterval(goToNext, 5000);
-    return () => clearInterval(slideInterval); // Cleanup interval on component unmount
-  }, [currentIndex, products.length]);
-
+    if (products.length === 0) return;
+    const slideInterval = setInterval(() => {
+      setCurrentIndex((prevIndex) => (prevIndex + 1) % products.length);
+    }, 5000);
+    return () => clearInterval(slideInterval);
+  }, [products.length]);
 
   if (!products || products.length === 0) {
-    return null; // Don't render anything if there are no products
+    return null;
   }
 
-  const currentProduct = products[currentIndex];
-
   return (
-    <div className="relative w-full h-64 md:h-96 rounded-2xl overflow-hidden mb-12">
-      <Link to={`/product/${encodeURIComponent(currentProduct.name)}`} className="block w-full h-full">
-        <img
-          src={`${API_BASE_URL}${
-            currentProduct.img.startsWith("/images") || currentProduct.img.startsWith("/uploads")
-              ? currentProduct.img
-              : "/images/" + currentProduct.img
-          }`}
-          alt={currentProduct.name}
-          className="w-full h-full object-cover transition-transform duration-500 ease-in-out"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
-        <div className="absolute bottom-0 left-0 p-6">
-            <h3 className="text-white text-2xl md:text-4xl font-bold">{currentProduct.name}</h3>
-            <p className="text-gray-300 text-lg">{currentProduct.price}</p>
+    <div className="relative w-full mb-16">
+      <div className="overflow-hidden">
+        <div
+          className="flex transition-transform duration-700 ease-in-out"
+          style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+        >
+          {products.map((product) => (
+            <div key={product.id} className="w-full flex-shrink-0">
+              <ProductCard product={product} />
+            </div>
+          ))}
         </div>
-      </Link>
+      </div>
       
-      {/* Navigation Buttons */}
-      <button onClick={goToPrevious} className="absolute top-1/2 left-4 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/80 transition-colors">
-        ❮
-      </button>
-      <button onClick={goToNext} className="absolute top-1/2 right-4 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/80 transition-colors">
-        ❯
-      </button>
-
-       {/* Slide Indicators */}
-       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2">
+      {/* Slide Indicators */}
+      <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 flex space-x-3">
         {products.map((_, index) => (
-          <div
+          <button
             key={index}
-            onClick={() => setCurrentIndex(index)}
-            className={`w-3 h-3 rounded-full cursor-pointer transition-all ${currentIndex === index ? 'bg-white scale-125' : 'bg-gray-400'}`}
-          ></div>
+            onClick={() => goToSlide(index)}
+            aria-label={`Go to slide ${index + 1}`}
+            className={`w-3 h-3 rounded-full transition-all duration-300 ${
+              currentIndex === index ? 'bg-white scale-125' : 'bg-gray-600 hover:bg-gray-400'
+            }`}
+          ></button>
         ))}
       </div>
     </div>
@@ -87,7 +111,6 @@ export default function Bestsellers() {
       .catch((err) => console.error("Failed to load products:", err));
   }, []);
 
-  // Filter for each category including the new 'top' type
   const topProducts = products.filter(
     (product) => product.type && product.type.includes("top")
   );
@@ -98,7 +121,6 @@ export default function Bestsellers() {
     (product) => product.type && product.type.includes("games")
   );
 
-  // Slicing logic for "Show More" functionality
   const displayedGiftCards = showAllGiftCards
     ? giftCardProducts
     : giftCardProducts.slice(0, 10);
@@ -108,10 +130,8 @@ export default function Bestsellers() {
     <section className="bg-[#0e1117] text-white py-8 px-4">
       <div className="max-w-screen-xl mx-auto">
         
-        {/* Slideshow Section */}
         <ProductSlideshow products={topProducts} />
 
-        {/* Gift Cards Section */}
         <h2 className="text-xl font-semibold mb-4">
           Gift Cards and Subscriptions
         </h2>
@@ -146,7 +166,6 @@ export default function Bestsellers() {
           ))}
         </div>
 
-        {/* Show More Button for Gift Cards */}
         {giftCardProducts.length > 10 && (
           <div className="flex justify-center mt-10">
             <button
@@ -175,7 +194,6 @@ export default function Bestsellers() {
           </div>
         )}
 
-        {/* Games Section */}
         <h2 className="text-xl font-semibold mt-16 mb-6">
           Games Keys and Accounts
         </h2>
@@ -210,7 +228,6 @@ export default function Bestsellers() {
           ))}
         </div>
 
-        {/* Show More Button for Games */}
         {gameProducts.length > 5 && (
           <div className="flex justify-center mt-10">
             <button
@@ -239,7 +256,6 @@ export default function Bestsellers() {
           </div>
         )}
 
-        {/* Features Section */}
         <div className="mt-20 grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
           <div>
             <div className="text-3xl mb-2">📧</div>
