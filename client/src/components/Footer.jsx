@@ -4,11 +4,28 @@ import API_BASE_URL from "../config";
 
 export default function Footer() {
   const productIcons = [
-    "apple.webp", "crunchyroll.png", "fortnite.webp", "freefire.webp", "linkedin.webp",
-    "netflix.webp", "playstation.webp", "rewarble-chatgpt.webp", "rewarble-discord.webp",
-    "rewarble-tiktok-ads.webp", "starzaplay.png", "steam.webp", "tinder.webp", "Shahid.png",
-    "surfshark.png", "prepexility.jpg", "xbox.png", "tod.png", "Gemini_Advanced.png",
-    "disney.webp", "google.webp", "picture.png", "spotify.webp", "roblox.webp"
+    "apple.webp",
+     "fortnite.webp",
+      "freefire.webp",
+      "netflix.webp", 
+    "playstation.webp",
+     "rewarble-chatgpt.webp",
+    "rewarble-discord.webp",
+     "starzaplay.png", 
+     "steam.webp",
+      "tinder.webp", 
+      "Shahid.png",
+     "Gemini_Advanced.png",
+    "disney.webp",
+     "google.webp", 
+     "spotify.webp",
+     "roblox.webp",
+     "/uploads/1752759466607.webp",
+      "/uploads/1752759490439.webp","/uploads/1752759518783.webp",
+      "/uploads/1752759647403.webp","/uploads/1752759680952.png",
+      "/uploads/1752759739421.webp","/uploads/1752759947682.webp",
+      "/uploads/1752759862724.webp",
+
   ];
 
   const handleTermsClick = () => {

@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import API_BASE_URL from '../config';
+import API_BASE_URL from "../config";
 
 const fixedTypes = ["all", "top", "giftcard", "games"];
 
-// Helper to normalize type strings: lowercase and remove underscores/spaces
+// Normalize strings (e.g. gift_cards → giftcard)
 const normalizeTypeString = (str) =>
-  str.toLowerCase().replace(/[_\s]/g, '');
+  str.toLowerCase().replace(/[_\s]/g, "");
 
 const UpdateProduct = () => {
   const [products, setProducts] = useState([]);
@@ -19,7 +19,7 @@ const UpdateProduct = () => {
     fetchProducts();
   }, []);
 
-  async function fetchProducts() {
+  const fetchProducts = async () => {
     setLoading(true);
     setError(null);
     try {
@@ -27,12 +27,12 @@ const UpdateProduct = () => {
       if (!res.ok) throw new Error("Failed to fetch products");
       const data = await res.json();
 
-      // Normalize type array for each product
-      const normalized = data.map(p => ({
-        ...p,
-        type: Array.isArray(p.type)
-          ? p.type.map(normalizeTypeString)
-          : [normalizeTypeString(String(p.type))],
+      // Normalize the `type` field
+      const normalized = data.map((product) => ({
+        ...product,
+        type: Array.isArray(product.type)
+          ? product.type.map(normalizeTypeString)
+          : [normalizeTypeString(String(product.type))],
       }));
 
       setProducts(normalized);
@@ -41,13 +41,12 @@ const UpdateProduct = () => {
     } finally {
       setLoading(false);
     }
-  }
+  };
 
-  // Filter products by normalized type
   const filteredProducts =
     filterType === "all"
       ? products
-      : products.filter(product => product.type.includes(filterType));
+      : products.filter((product) => product.type.includes(filterType));
 
   const handleFilterChange = (e) => {
     setFilterType(e.target.value);
@@ -67,7 +66,7 @@ const UpdateProduct = () => {
           Update Products
         </h1>
 
-        {/* Fixed filter dropdown */}
+        {/* Filter dropdown */}
         <div className="mb-6 flex justify-center">
           <label htmlFor="filterType" className="mr-3 font-semibold text-black">
             Filter by type:
@@ -80,7 +79,9 @@ const UpdateProduct = () => {
           >
             {fixedTypes.map((type) => (
               <option key={type} value={type}>
-                {type === "all" ? "All Types" : type.charAt(0).toUpperCase() + type.slice(1)}
+                {type === "all"
+                  ? "All Types"
+                  : type.charAt(0).toUpperCase() + type.slice(1)}
               </option>
             ))}
           </select>
