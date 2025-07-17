@@ -1,44 +1,46 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import API_BASE_URL from "../config";
 
 export default function Footer() {
-  const productIcons = [
-  "apple.webp",
-  "fortnite.webp",
-  "freefire.webp",
-  "netflix.webp", 
-  "playstation.webp",
-  "rewarble-chatgpt.webp",
-  "rewarble-discord.webp",
-  "starzaplay.png", 
-  "steam.webp",
-  "tinder.webp", 
-  "Shahid.png",
-  "Gemini_Advanced.png",
-  "disney.webp",
-  "google.webp", 
-  "spotify.webp",
-  "roblox.webp",
-  `${API_BASE_URL}/uploads/1752759466607.webp`,
-  `${API_BASE_URL}/uploads/1752759490439.webp`,
-  `${API_BASE_URL}/uploads/1752759518783.webp`,
-  `${API_BASE_URL}/uploads/1752759647403.webp`,
-  `${API_BASE_URL}/uploads/1752759680952.png`,
-  `${API_BASE_URL}/uploads/1752759739421.webp`,
-  `${API_BASE_URL}/uploads/1752759947682.webp`,
-  `${API_BASE_URL}/uploads/1752759862724.webp`
-];
+  const navigate = useNavigate();
 
+  const productIcons = [
+    "apple.webp",
+    "fortnite.webp",
+    "freefire.webp",
+    "netflix.webp",
+    "playstation.webp",
+    "rewarble-chatgpt.webp",
+    "rewarble-discord.webp",
+    "starzaplay.png",
+    "steam.webp",
+    "tinder.webp",
+    "Shahid.png",
+    "Gemini_Advanced.png",
+    "disney.webp",
+    "google.webp",
+    "spotify.webp",
+    "roblox.webp",
+    `${API_BASE_URL}/uploads/1752759466607.webp`,
+    `${API_BASE_URL}/uploads/1752759490439.webp`,
+    `${API_BASE_URL}/uploads/1752759518783.webp`,
+    `${API_BASE_URL}/uploads/1752759647403.webp`,
+    `${API_BASE_URL}/uploads/1752759680952.png`,
+    `${API_BASE_URL}/uploads/1752759739421.webp`,
+    `${API_BASE_URL}/uploads/1752759947682.webp`,
+    `${API_BASE_URL}/uploads/1752759862724.webp`,
+  ];
 
   const handleTermsClick = () => {
-    window.location.href = "/terms-conditions";
+    navigate("/terms-conditions");
     window.scrollTo(0, 0);
   };
 
   return (
     <footer className="bg-[#0e1117] text-white py-12 px-6 mt-16 border-t border-gray-800">
       <div className="max-w-screen-xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-10">
+        {/* About Section */}
         <div>
           <h2 className="text-xl font-semibold mb-4">About Souktek</h2>
           <p className="text-gray-400 text-sm mb-4">
@@ -54,8 +56,8 @@ export default function Footer() {
                 rel="noopener noreferrer"
               >
                 <img
-                  src="uploads/1752415384933.png"
-                  alt="TikTok"
+                  src="/uploads/1752415384933.png"
+                  alt="Souktek TikTok"
                   className="w-10 h-10"
                 />
               </a>
@@ -68,7 +70,7 @@ export default function Footer() {
               >
                 <img
                   src={`${API_BASE_URL}/uploads/1752108171595.png`}
-                  alt="Instagram"
+                  alt="Souktek Instagram"
                   className="w-10 h-10"
                 />
               </a>
@@ -81,7 +83,7 @@ export default function Footer() {
               >
                 <img
                   src="/uploads/1752414597991.png"
-                  alt="Facebook"
+                  alt="Souktek Facebook"
                   className="w-10 h-10"
                 />
               </a>
@@ -98,6 +100,7 @@ export default function Footer() {
           </p>
         </div>
 
+        {/* Legal Section */}
         <div>
           <h2 className="text-xl font-semibold mb-4">Legal</h2>
           <ul className="space-y-2 text-sm text-gray-400">
@@ -130,13 +133,14 @@ export default function Footer() {
           </ul>
         </div>
 
+        {/* Support Section */}
         <div>
           <h2 className="text-xl font-semibold mb-4">Support</h2>
           <ul className="space-y-2 text-sm text-gray-400">
             <li>
               <button
                 type="button"
-                className="text-gray-400 hover:text-blue-500 underline cursor-pointer bg-transparent border-none p-0"
+                className="hover:text-blue-500 underline cursor-pointer bg-transparent border-none p-0"
                 onClick={() => alert("Feature coming soon!")}
               >
                 Help Center
@@ -145,7 +149,7 @@ export default function Footer() {
             <li>
               <button
                 type="button"
-                className="text-gray-400 hover:text-blue-500 underline cursor-pointer bg-transparent border-none p-0"
+                className="hover:text-blue-500 underline cursor-pointer bg-transparent border-none p-0"
                 onClick={() => alert("Feature coming soon!")}
               >
                 How to Buy
@@ -154,7 +158,7 @@ export default function Footer() {
             <li>
               <button
                 type="button"
-                className="text-gray-400 hover:text-blue-500 underline cursor-pointer bg-transparent border-none p-0"
+                className="hover:text-blue-500 underline cursor-pointer bg-transparent border-none p-0"
                 onClick={() => alert("Feature coming soon!")}
               >
                 Account Support
@@ -163,23 +167,32 @@ export default function Footer() {
           </ul>
         </div>
 
+        {/* Product Icons */}
         <div>
           <h2 className="text-xl font-semibold mb-4">Our Products</h2>
           <div className="grid grid-cols-4 gap-4">
             {productIcons.map((icon, i) => (
               <img
                 key={i}
-                src={`/images/icons/${icon}`}
+                src={
+                  icon.startsWith("http") || icon.startsWith("/uploads/")
+                    ? icon
+                    : `/images/icons/${icon}`
+                }
                 alt={icon.replace(/\.(png|webp|jpg)$/i, "")}
                 className="w-10 h-10 object-contain"
+                onError={(e) =>
+                  (e.target.src = "/images/icons/default-icon.png")
+                }
               />
             ))}
           </div>
         </div>
       </div>
 
-      <div className="mt-12 text-center text-sm text-gray-600">&copy; {new Date().getFullYear()} Souktek. All rights reserved.| &copy;Developed by Hayouni_Amin.</div>
-    
+      <div className="mt-12 text-center text-sm text-gray-600">
+        &copy; {new Date().getFullYear()} Souktek. All rights reserved. | Developed by Hayouni_Amin.
+      </div>
     </footer>
   );
 }
