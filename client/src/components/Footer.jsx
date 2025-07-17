@@ -4,29 +4,32 @@ import API_BASE_URL from "../config";
 
 export default function Footer() {
   const productIcons = [
-    "apple.webp",
-     "fortnite.webp",
-      "freefire.webp",
-      "netflix.webp", 
-    "playstation.webp",
-     "rewarble-chatgpt.webp",
-    "rewarble-discord.webp",
-     "starzaplay.png", 
-     "steam.webp",
-      "tinder.webp", 
-      "Shahid.png",
-     "Gemini_Advanced.png",
-    "disney.webp",
-     "google.webp", 
-     "spotify.webp",
-     "roblox.webp",
-     "/uploads/1752759466607.webp",
-      "/uploads/1752759490439.webp","/uploads/1752759518783.webp",
-      "/uploads/1752759647403.webp","/uploads/1752759680952.png",
-      "/uploads/1752759739421.webp","/uploads/1752759947682.webp",
-      "/uploads/1752759862724.webp",
+  "apple.webp",
+  "fortnite.webp",
+  "freefire.webp",
+  "netflix.webp", 
+  "playstation.webp",
+  "rewarble-chatgpt.webp",
+  "rewarble-discord.webp",
+  "starzaplay.png", 
+  "steam.webp",
+  "tinder.webp", 
+  "Shahid.png",
+  "Gemini_Advanced.png",
+  "disney.webp",
+  "google.webp", 
+  "spotify.webp",
+  "roblox.webp",
+  `${API_BASE_URL}/uploads/1752759466607.webp`,
+  `${API_BASE_URL}/uploads/1752759490439.webp`,
+  `${API_BASE_URL}/uploads/1752759518783.webp`,
+  `${API_BASE_URL}/uploads/1752759647403.webp`,
+  `${API_BASE_URL}/uploads/1752759680952.png`,
+  `${API_BASE_URL}/uploads/1752759739421.webp`,
+  `${API_BASE_URL}/uploads/1752759947682.webp`,
+  `${API_BASE_URL}/uploads/1752759862724.webp`
+];
 
-  ];
 
   const handleTermsClick = () => {
     window.location.href = "/terms-conditions";
