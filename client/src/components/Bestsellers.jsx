@@ -2,14 +2,16 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import API_BASE_URL from "../config";
 
-// New: A modern, responsive product card for the slideshow
-const ProductCard = ({ product }) => {
+// Card for the 3D Carousel
+const ProductCard = ({ product, isactive }) => {
   if (!product) return null;
 
   return (
-    <div className="flex-shrink-0 w-full max-w-sm mx-auto">
+    <div 
+      className={`w-full h-full absolute transition-transform duration-500 ease-in-out ${isactive ? 'opacity-100' : 'opacity-60 scale-90'}`}
+    >
       <div className="bg-[#1a1d23] rounded-2xl overflow-hidden shadow-2xl h-full flex flex-col group">
-        <div className="relative overflow-hidden h-64">
+        <div className="relative overflow-hidden h-2/3">
           <img
             src={`${API_BASE_URL}${
               product.img.startsWith("/images") || product.img.startsWith("/uploads")
@@ -20,77 +22,81 @@ const ProductCard = ({ product }) => {
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ease-out"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
-          <div className="absolute top-4 right-4 bg-yellow-400 text-black text-xs font-bold px-3 py-1 rounded-full shadow-lg">
-            Featured
-          </div>
         </div>
-
-        <div className="p-6 flex flex-col flex-grow">
-          <h3 className="text-white text-2xl font-bold truncate mb-2">{product.name}</h3>
-          <p className="text-gray-400 text-sm flex-grow mb-6 line-clamp-2">{product.description}</p>
-          <div className="flex justify-between items-center mt-auto">
-            <p className="text-2xl font-semibold text-white">{product.price}</p>
-            <Link 
-              to={`/product/${encodeURIComponent(product.name)}`} 
-              className="bg-white text-black font-bold py-2 px-6 rounded-full group-hover:bg-yellow-400 transition-colors duration-300"
-            >
-              View
-            </Link>
-          </div>
+        <div className="p-6 flex flex-col flex-grow justify-center text-center">
+          <h3 className="text-white text-2xl font-bold truncate mb-4">{product.name}</h3>
+          <Link 
+            to={`/product/${encodeURIComponent(product.name)}`} 
+            className="bg-white text-black font-bold py-2 px-6 rounded-full self-center group-hover:bg-yellow-400 transition-colors duration-300"
+          >
+            View Details
+          </Link>
         </div>
       </div>
     </div>
   );
 };
 
-
-// Enhanced Slideshow Component
+// 3D Circular Carousel Component
 const ProductSlideshow = ({ products }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  const goToSlide = (index) => {
-    setCurrentIndex(index);
+  const goToNext = () => {
+    setCurrentIndex((prevIndex) => (prevIndex + 1) % products.length);
+  };
+  
+  const goToPrevious = () => {
+    setCurrentIndex((prevIndex) => (prevIndex - 1 + products.length) % products.length);
   };
 
   useEffect(() => {
     if (products.length === 0) return;
-    const slideInterval = setInterval(() => {
-      setCurrentIndex((prevIndex) => (prevIndex + 1) % products.length);
-    }, 5000);
+    const slideInterval = setInterval(goToNext, 4000);
     return () => clearInterval(slideInterval);
   }, [products.length]);
 
   if (!products || products.length === 0) {
     return null;
   }
+  
+  const radius = 250; // Controls the size of the circle (in px)
+  const angleStep = 360 / products.length;
 
   return (
-    <div className="relative w-full mb-16">
-      <div className="overflow-hidden">
-        <div
-          className="flex transition-transform duration-700 ease-in-out"
-          style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+    <div className="h-[450px] w-full flex flex-col items-center justify-center mb-16">
+      <div className="relative w-full h-full" style={{ perspective: '1000px' }}>
+        <div 
+          className="absolute w-full h-full"
+          style={{
+            transformStyle: 'preserve-3d',
+            transform: `rotateY(${-currentIndex * angleStep}deg)`,
+            transition: 'transform 0.8s cubic-bezier(0.77, 0, 0.175, 1)',
+          }}
         >
-          {products.map((product) => (
-            <div key={product.id} className="w-full flex-shrink-0">
-              <ProductCard product={product} />
-            </div>
-          ))}
+          {products.map((product, index) => {
+            const angle = index * angleStep;
+            return (
+              <div
+                key={product.id}
+                className="absolute w-64 h-96 top-1/2 left-1/2 -mt-48 -ml-32"
+                style={{
+                  transform: `rotateY(${angle}deg) translateZ(${radius}px)`,
+                }}
+              >
+                <ProductCard product={product} isactive={currentIndex === index} />
+              </div>
+            );
+          })}
         </div>
       </div>
-      
-      {/* Slide Indicators */}
-      <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 flex space-x-3">
-        {products.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => goToSlide(index)}
-            aria-label={`Go to slide ${index + 1}`}
-            className={`w-3 h-3 rounded-full transition-all duration-300 ${
-              currentIndex === index ? 'bg-white scale-125' : 'bg-gray-600 hover:bg-gray-400'
-            }`}
-          ></button>
-        ))}
+       {/* Navigation Buttons */}
+       <div className="flex gap-8 mt-8">
+        <button onClick={goToPrevious} className="px-6 py-2 bg-white text-black font-semibold rounded-full shadow-md hover:bg-gray-200 transition-all duration-300">
+          Previous
+        </button>
+        <button onClick={goToNext} className="px-6 py-2 bg-white text-black font-semibold rounded-full shadow-md hover:bg-gray-200 transition-all duration-300">
+          Next
+        </button>
       </div>
     </div>
   );
