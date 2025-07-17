@@ -1,7 +1,8 @@
 import React from "react";
 import { Routes, Route } from "react-router-dom";
+import Navbar from './components/Navbar';
 
-import Navbar from "./components/Navbar";
+//import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
 import Bestsellers from "./components/Bestsellers";
 import Footer from "./components/Footer";
@@ -10,7 +11,6 @@ import ProductPage from './components/ProductPage';
 import Login from './components/Login';
 import SecretKeyVerification from './components/SecretKeyVerification';
 import UserDashboard from './components/UserDashboard';
-
 import AdminDashboard from './components/AdminDashboard';
 import CreateProduct from './components/CreateProduct';
 import ReadProducts from './components/ReadProducts';
