@@ -2,12 +2,6 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import API_BASE_URL from "../config";
 
-const POSSIBLE_TYPES = [
-  { value: "gift_cards", label: "Gift Cards" },
-  { value: "games", label: "Games" },
-  // Add more types here if needed
-];
-
 const EditProduct = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -17,7 +11,7 @@ const EditProduct = () => {
     price: "",
     img: "",
     description: "",
-    type: [], // now an array of strings
+    type: "",
   });
   const [options, setOptions] = useState([]);
   const [image, setImage] = useState(null);
@@ -32,17 +26,7 @@ const EditProduct = () => {
         const productRes = await fetch(`${API_BASE_URL}/api/products/${id}`);
         if (!productRes.ok) throw new Error("Product not found");
         const productData = await productRes.json();
-
-        // Convert type field to array if necessary
-        let typesArray = [];
-        if (Array.isArray(productData.type)) {
-          typesArray = productData.type;
-        } else if (typeof productData.type === "string" && productData.type.trim() !== "") {
-          // If backend sends a comma-separated string, parse it
-          typesArray = productData.type.split(",").map((t) => t.trim());
-        }
-
-        setProduct({ ...productData, type: typesArray });
+        setProduct(productData);
 
         const optionsRes = await fetch(`${API_BASE_URL}/api/product_options/${id}`);
         if (!optionsRes.ok) throw new Error("Failed to load options");
@@ -71,18 +55,6 @@ const EditProduct = () => {
   const handleProductChange = (e) => {
     const { name, value } = e.target;
     setProduct((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleTypeChange = (typeValue) => {
-    setProduct((prev) => {
-      let newTypes;
-      if (prev.type.includes(typeValue)) {
-        newTypes = prev.type.filter((t) => t !== typeValue);
-      } else {
-        newTypes = [...prev.type, typeValue];
-      }
-      return { ...prev, type: newTypes };
-    });
   };
 
   const handleOptionChange = (optionId, field, value) => {
@@ -141,8 +113,7 @@ const EditProduct = () => {
     productFormData.append("name", product.name);
     productFormData.append("price", product.price);
     productFormData.append("description", product.description);
-    // Send type as JSON string
-    productFormData.append("type", JSON.stringify(product.type));
+    productFormData.append("type", product.type);
     if (image) productFormData.append("image", image);
 
     try {
@@ -193,9 +164,7 @@ const EditProduct = () => {
   // Helper to fix image URL for display
   const getFullImageUrl = (img) => {
     if (!img) return null;
-    return `${API_BASE_URL}${
-      img.startsWith("/images") || img.startsWith("/uploads") ? img : "/images/" + img
-    }`;
+    return `${API_BASE_URL}${img.startsWith("/images") || img.startsWith("/uploads") ? img : "/images/" + img}`;
   };
 
   if (loading)
@@ -245,19 +214,13 @@ const EditProduct = () => {
 
             <div className="mb-4">
               <label className="block font-semibold text-black mb-1">Product Type</label>
-              <div className="flex gap-4">
-                {POSSIBLE_TYPES.map(({ value, label }) => (
-                  <label key={value} className="inline-flex items-center text-black">
-                    <input
-                      type="checkbox"
-                      checked={product.type.includes(value)}
-                      onChange={() => handleTypeChange(value)}
-                      className="mr-2"
-                    />
-                    {label}
-                  </label>
-                ))}
-              </div>
+              <input
+                type="text"
+                name="type"
+                value={product.type}
+                onChange={handleProductChange}
+                className={inputClass}
+              />
             </div>
 
             <div className="mb-4">
@@ -283,69 +246,87 @@ const EditProduct = () => {
                   <img
                     src={getFullImageUrl(product.img)}
                     alt="Current"
-                    className="max-w-xs rounded-lg"
+                    className="max-h-40 rounded shadow"
                   />
                 </div>
               )}
             </div>
           </div>
 
-          {/* === Product Options === */}
-          <div>
-            <h2 className="text-2xl font-bold mb-4 text-gray-700">Product Options</h2>
-
-            {options.length === 0 && <p>No options found for this product.</p>}
-
-            {options.map((option) => (
-              <div
-                key={option.id}
-                className="mb-6 p-4 bg-gray-200 rounded-lg border border-gray-300"
-              >
-                <label className="block font-semibold text-black mb-1">Label</label>
-                <input
-                  type="text"
-                  value={editedOptions[option.id]?.label || ""}
-                  onChange={(e) => handleOptionChange(option.id, "label", e.target.value)}
-                  className={inputClass}
-                />
-
-                <label className="block font-semibold text-black mt-4 mb-1">Price</label>
-                <input
-                  type="text"
-                  value={editedOptions[option.id]?.price || ""}
-                  onChange={(e) => handleOptionChange(option.id, "price", e.target.value)}
-                  className={inputClass}
-                />
-
-                <label className="block font-semibold text-black mt-4 mb-1">Description</label>
-                <textarea
-                  value={editedOptions[option.id]?.description || ""}
-                  onChange={(e) => handleOptionChange(option.id, "description", e.target.value)}
-                  className={`${inputClass} resize-none`}
-                  rows={3}
-                />
-
-                <button
-                  type="button"
-                  onClick={() => handleDeleteOption(option.id)}
-                  className="mt-4 bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg"
+          {/* === Options === */}
+          <div className="border-t pt-6 mt-6">
+            <h2 className="text-2xl font-semibold text-gray-800 mb-4">Product Options</h2>
+            {options.length === 0 ? (
+              <p className="text-gray-700">No options for this product.</p>
+            ) : (
+              options.map((opt) => (
+                <div
+                  key={opt.id}
+                  className="bg-gray-50 p-4 mb-4 rounded-lg shadow-sm"
                 >
-                  Delete Option
-                </button>
-              </div>
-            ))}
-          </div>
+                  <h3 className="text-xl font-bold mb-3 text-black">
+                    Option: {opt.label}
+                  </h3>
 
-          {/* === Submit Button and Error === */}
-          {error && (
-            <p className="text-red-600 text-center font-semibold mb-4">{error}</p>
-          )}
+                  <div className="mb-2">
+                    <label className="block font-semibold text-black mb-1">
+                      Label
+                    </label>
+                    <input
+                      type="text"
+                      value={editedOptions[opt.id]?.label ?? ""}
+                      onChange={(e) =>
+                        handleOptionChange(opt.id, "label", e.target.value)
+                      }
+                      className={inputClass}
+                    />
+                  </div>
+
+                  <div className="mb-2">
+                    <label className="block font-semibold text-black mb-1">
+                      Price (DT)
+                    </label>
+                    <input
+                      type="text"
+                      value={editedOptions[opt.id]?.price ?? ""}
+                      onChange={(e) =>
+                        handleOptionChange(opt.id, "price", e.target.value)
+                      }
+                      className={inputClass}
+                    />
+                  </div>
+
+                  <div className="mb-2">
+                    <label className="block font-semibold text-black mb-1">
+                      Description
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={editedOptions[opt.id]?.description ?? ""}
+                      onChange={(e) =>
+                        handleOptionChange(opt.id, "description", e.target.value)
+                      }
+                      className={`${inputClass} resize-none`}
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteOption(opt.id)}
+                    className="mt-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
+                  >
+                    🗑️ Delete Option
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
 
           <button
             type="submit"
-            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-lg transition duration-300"
+            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-lg mt-6"
           >
-            Save Changes
+            Update Product & Options
           </button>
         </form>
       </div>
