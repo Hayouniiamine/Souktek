@@ -2,13 +2,83 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import API_BASE_URL from "../config";
 
+// New Slideshow Component
+const ProductSlideshow = ({ products }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  const goToPrevious = () => {
+    const isFirstSlide = currentIndex === 0;
+    const newIndex = isFirstSlide ? products.length - 1 : currentIndex - 1;
+    setCurrentIndex(newIndex);
+  };
+
+  const goToNext = () => {
+    const isLastSlide = currentIndex === products.length - 1;
+    const newIndex = isLastSlide ? 0 : currentIndex + 1;
+    setCurrentIndex(newIndex);
+  };
+  
+  // Automatically advance the slideshow every 5 seconds
+  useEffect(() => {
+    const slideInterval = setInterval(goToNext, 5000);
+    return () => clearInterval(slideInterval); // Cleanup interval on component unmount
+  }, [currentIndex, products.length]);
+
+
+  if (!products || products.length === 0) {
+    return null; // Don't render anything if there are no products
+  }
+
+  const currentProduct = products[currentIndex];
+
+  return (
+    <div className="relative w-full h-64 md:h-96 rounded-2xl overflow-hidden mb-12">
+      <Link to={`/product/${encodeURIComponent(currentProduct.name)}`} className="block w-full h-full">
+        <img
+          src={`${API_BASE_URL}${
+            currentProduct.img.startsWith("/images") || currentProduct.img.startsWith("/uploads")
+              ? currentProduct.img
+              : "/images/" + currentProduct.img
+          }`}
+          alt={currentProduct.name}
+          className="w-full h-full object-cover transition-transform duration-500 ease-in-out"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
+        <div className="absolute bottom-0 left-0 p-6">
+            <h3 className="text-white text-2xl md:text-4xl font-bold">{currentProduct.name}</h3>
+            <p className="text-gray-300 text-lg">{currentProduct.price}</p>
+        </div>
+      </Link>
+      
+      {/* Navigation Buttons */}
+      <button onClick={goToPrevious} className="absolute top-1/2 left-4 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/80 transition-colors">
+        ❮
+      </button>
+      <button onClick={goToNext} className="absolute top-1/2 right-4 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/80 transition-colors">
+        ❯
+      </button>
+
+       {/* Slide Indicators */}
+       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2">
+        {products.map((_, index) => (
+          <div
+            key={index}
+            onClick={() => setCurrentIndex(index)}
+            className={`w-3 h-3 rounded-full cursor-pointer transition-all ${currentIndex === index ? 'bg-white scale-125' : 'bg-gray-400'}`}
+          ></div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+
 export default function Bestsellers() {
   const [products, setProducts] = useState([]);
   const [showAllGames, setShowAllGames] = useState(false);
-  const [showAllGiftCards, setShowAllGiftCards] = useState(false); // New state for gift cards
+  const [showAllGiftCards, setShowAllGiftCards] = useState(false);
 
   useEffect(() => {
-    // Scroll to the top when the component loads
     window.scrollTo(0, 0);
 
     fetch(`${API_BASE_URL}/api/products`)
@@ -17,12 +87,18 @@ export default function Bestsellers() {
       .catch((err) => console.error("Failed to load products:", err));
   }, []);
 
-  const giftCardProducts = products.filter(
-    (product) => product.type === "gift_cards"
+  // Filter for each category including the new 'top' type
+  const topProducts = products.filter(
+    (product) => product.type && product.type.includes("top")
   );
-  const gameProducts = products.filter((product) => product.type === "games");
+  const giftCardProducts = products.filter(
+    (product) => product.type && product.type.includes("gift_cards")
+  );
+  const gameProducts = products.filter(
+    (product) => product.type && product.type.includes("games")
+  );
 
-  // Determine which products to display based on state
+  // Slicing logic for "Show More" functionality
   const displayedGiftCards = showAllGiftCards
     ? giftCardProducts
     : giftCardProducts.slice(0, 10);
@@ -31,12 +107,16 @@ export default function Bestsellers() {
   return (
     <section className="bg-[#0e1117] text-white py-8 px-4">
       <div className="max-w-screen-xl mx-auto">
+        
+        {/* Slideshow Section */}
+        <ProductSlideshow products={topProducts} />
+
         {/* Gift Cards Section */}
         <h2 className="text-xl font-semibold mb-4">
           Gift Cards and Subscriptions
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6">
-          {displayedGiftCards.map((product, index) => ( // Updated to use displayedGiftCards
+          {displayedGiftCards.map((product, index) => (
             <Link
               to={`/product/${encodeURIComponent(product.name)}`}
               key={index}
@@ -131,7 +211,7 @@ export default function Bestsellers() {
         </div>
 
         {/* Show More Button for Games */}
-        {gameProducts.length > 6 && ( // Corrected the condition to 5 to match the slice
+        {gameProducts.length > 5 && (
           <div className="flex justify-center mt-10">
             <button
               onClick={() => setShowAllGames(!showAllGames)}
