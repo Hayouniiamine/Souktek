@@ -23,10 +23,12 @@ const UpdateProduct = () => {
       if (!res.ok) throw new Error("Failed to fetch products");
       const data = await res.json();
 
-      // Normalize types: ensure product.type is always an array (for safety)
+      // Normalize type to always be an array of lowercase strings
       const normalized = data.map(p => ({
         ...p,
-        type: Array.isArray(p.type) ? p.type.map(t => t.toLowerCase()) : [String(p.type).toLowerCase()],
+        type: Array.isArray(p.type)
+          ? p.type.map(t => t.toLowerCase())
+          : [String(p.type).toLowerCase()],
       }));
 
       setProducts(normalized);
@@ -37,20 +39,18 @@ const UpdateProduct = () => {
     }
   }
 
-  // Filtered products based on filterType:
-  // - If 'all', show all
-  // - Otherwise, show products whose type array includes the filterType
+  // Filter products:
+  // If "all" show all,
+  // else show products where type array includes filterType
   const filteredProducts =
     filterType === "all"
       ? products
       : products.filter(product => product.type.includes(filterType));
 
-  // Handler
   const handleFilterChange = (e) => {
     setFilterType(e.target.value);
   };
 
-  // Image URL helper
   const getFullImageUrl = (img) => {
     if (!img) return "/images/default_image.png";
     return `${API_BASE_URL}${

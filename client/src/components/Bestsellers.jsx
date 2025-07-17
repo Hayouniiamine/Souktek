@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import API_BASE_URL from "../config";
 
-// Card for the 3D Carousel (Icon removed)
+// Card for the 3D Carousel
 const ProductCard = ({ product, isactive }) => {
   if (!product) return null;
 
@@ -12,7 +12,6 @@ const ProductCard = ({ product, isactive }) => {
         className={`w-full h-full absolute transition-all duration-500 ease-in-out ${
           isactive ? "opacity-100" : "opacity-50 scale-90"
         }`}
-        // The fix below helps browsers render 3D transforms more smoothly
         style={{ backfaceVisibility: "hidden", transform: "translateZ(0px)" }}
       >
         <div className="relative bg-[#1a1d23] rounded-2xl overflow-hidden shadow-2xl h-full flex flex-col group">
@@ -49,6 +48,10 @@ const ProductCard = ({ product, isactive }) => {
 // 3D Circular Carousel Component
 const ProductSlideshow = ({ products }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
+
+  const minSwipeDistance = 50;
 
   const goToNext = () => {
     if (products.length > 0) {
@@ -64,6 +67,27 @@ const ProductSlideshow = ({ products }) => {
     }
   };
 
+  const onTouchStart = (e) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+    if (isLeftSwipe) {
+      goToNext();
+    } else if (isRightSwipe) {
+      goToPrevious();
+    }
+  };
+
   useEffect(() => {
     if (products.length < 2) return;
     const slideInterval = setInterval(goToNext, 4000);
@@ -74,13 +98,11 @@ const ProductSlideshow = ({ products }) => {
     return null;
   }
 
-  // MODIFIED: Increased radius to add more space between cards
   const radius = 220;
   const angleStep = products.length > 0 ? 360 / products.length : 0;
 
   return (
     <div className="w-full flex flex-col items-center justify-center mb-12">
-      {/* New: Centered Bestselling Banner */}
       <div className="mb-6 flex justify-center">
         <div className="bg-yellow-400 text-black font-bold uppercase tracking-wider px-8 py-2 rounded-full shadow-lg">
           Bestsellers
@@ -91,13 +113,26 @@ const ProductSlideshow = ({ products }) => {
         className="relative h-[320px] w-full"
         style={{ perspective: "1000px" }}
       >
+        <button
+          onClick={goToPrevious}
+          className="absolute left-0 sm:left-4 md:left-12 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-white/10 text-white hover:bg-white/20 transition-all duration-300"
+          aria-label="Previous slide"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+
         <div
-          className="absolute w-full h-full"
+          className="absolute w-full h-full cursor-grab"
           style={{
             transformStyle: "preserve-3d",
             transform: `rotateY(${-currentIndex * angleStep}deg)`,
             transition: "transform 0.8s cubic-bezier(0.77, 0, 0.175, 1)",
           }}
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
         >
           {products.map((product, index) => {
             const angle = index * angleStep;
@@ -107,7 +142,7 @@ const ProductSlideshow = ({ products }) => {
                 className="absolute w-48 h-72 top-1/2 left-1/2 -mt-36 -ml-24"
                 style={{
                   transform: `rotateY(${angle}deg) translateZ(${radius}px)`,
-                  backfaceVisibility: "hidden", // Fix for 3D rendering glitch
+                  backfaceVisibility: "hidden",
                 }}
               >
                 <ProductCard
@@ -118,20 +153,15 @@ const ProductSlideshow = ({ products }) => {
             );
           })}
         </div>
-      </div>
-
-      <div className="flex gap-8 mt-4 z-20">
-        <button
-          onClick={goToPrevious}
-          className="px-6 py-2 bg-white text-black font-semibold rounded-full shadow-md hover:bg-gray-200 transition-all duration-300"
-        >
-          Prev
-        </button>
+        
         <button
           onClick={goToNext}
-          className="px-6 py-2 bg-white text-black font-semibold rounded-full shadow-md hover:bg-gray-200 transition-all duration-300"
+          className="absolute right-0 sm:right-4 md:right-12 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-white/10 text-white hover:bg-white/20 transition-all duration-300"
+          aria-label="Next slide"
         >
-          Next
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
         </button>
       </div>
     </div>
