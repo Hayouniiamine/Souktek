@@ -1,50 +1,39 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import API_BASE_URL from '../config'; // Assuming config.js is in the parent directory
+import API_BASE_URL from "../config";
 
 const DeleteProduct = () => {
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [filterType, setFilterType] = useState("all");
-  const [types, setTypes] = useState([]);
 
-  // Fetch all types on mount
-  useEffect(() => {
-    const fetchAllTypes = async () => {
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/products`);
-        const data = await res.json();
-        setTypes(Array.from(new Set(data.map(p => p.type))).filter(Boolean));
-      } catch (error) {
-        console.error("Error fetching product types:", error);
-      }
-    };
-    fetchAllTypes();
-  }, []);
+  // Fixed list of types
+  const types = ["all", "top", "gift_cards", "games"];
 
-  // Fetch products when filterType changes
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        let url = `${API_BASE_URL}/api/products`;
-        if (filterType !== "all") {
-          url = `${API_BASE_URL}/api/products/type/${encodeURIComponent(filterType)}`;
-        }
+        const res = await fetch(`${API_BASE_URL}/api/products`);
+        const data = await res.json();
 
-        const response = await fetch(url);
-        if (!response.ok) throw new Error("Failed to fetch products");
-        const data = await response.json();
-        setProducts(data);
+        const filtered = filterType === "all"
+          ? data
+          : data.filter((product) =>
+              Array.isArray(product.type)
+                ? product.type.includes(filterType)
+                : product.type === filterType
+            );
+
+        setProducts(filtered);
       } catch (error) {
         console.error("Error fetching products:", error);
-        setProducts([]); // clear products on error
+        setProducts([]);
       }
     };
 
     fetchProducts();
   }, [filterType]);
 
-  // Helper to get full image URL
   const getFullImageUrl = (img) => {
     if (!img) return "/images/default_image.png";
     return `${API_BASE_URL}${
@@ -70,8 +59,7 @@ const DeleteProduct = () => {
 
         if (response.ok) {
           alert("✅ Product deleted successfully!");
-          // Remove the deleted product locally
-          setProducts(products.filter((product) => product.id !== id));
+          setProducts((prev) => prev.filter((p) => p.id !== id));
           navigate("/admin-dashboard");
         } else {
           const errorData = await response.json();
@@ -87,9 +75,7 @@ const DeleteProduct = () => {
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-center text-black mb-10">
-          Delete Products
-        </h1>
+        <h1 className="text-3xl font-bold text-center text-black mb-10">Delete Products</h1>
 
         <div className="mb-6 flex justify-center">
           <select
@@ -97,10 +83,9 @@ const DeleteProduct = () => {
             value={filterType}
             className="p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
           >
-            <option value="all">All Types</option>
             {types.map((type) => (
               <option key={type} value={type}>
-                {type}
+                {type === "gift_cards" ? "gift_cards" : type}
               </option>
             ))}
           </select>

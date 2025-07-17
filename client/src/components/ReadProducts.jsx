@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import API_BASE_URL from '../config';
 
+// Helper to normalize type strings: lowercase, remove underscores/spaces
+const normalizeTypeString = (str) =>
+  str.toLowerCase().replace(/[_\s]/g, '');
+
 const ReadProducts = () => {
   const [products, setProducts] = useState([]);
   const [filterType, setFilterType] = useState('all');
@@ -9,40 +13,38 @@ const ReadProducts = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const url =
-          filterType === 'all'
-            ? `${API_BASE_URL}/api/products`
-            : `${API_BASE_URL}/api/products?type=${encodeURIComponent(filterType)}`;
+        const res = await fetch(`${API_BASE_URL}/api/products`);
+        const data = await res.json();
 
-        const response = await fetch(url);
-        const data = await response.json();
-        setProducts(data);
+        const normalizedProducts = data.map((p) => ({
+          ...p,
+          type: Array.isArray(p.type)
+            ? p.type.map(normalizeTypeString)
+            : [normalizeTypeString(String(p.type))],
+        }));
 
-        if (filterType === 'all') {
-          // Get unique product types
-          const allTypes = Array.from(
-            new Set(data.flatMap((p) => (Array.isArray(p.type) ? p.type : [p.type])))
-          ).filter(Boolean);
-          setTypes(allTypes);
-        }
-      } catch (error) {
-        console.error('Error fetching products:', error);
+        setProducts(normalizedProducts);
+
+        const uniqueTypes = Array.from(
+          new Set(normalizedProducts.flatMap((p) => p.type))
+        );
+        setTypes(uniqueTypes);
+      } catch (err) {
+        console.error('Error fetching products:', err);
       }
     };
 
     fetchProducts();
-  }, [filterType]);
+  }, []);
 
-  // Only update filterType if the selected type exists or is "all"
   const handleFilterChange = (e) => {
-    const selected = e.target.value;
-    if (selected === 'all' || types.includes(selected)) {
-      setFilterType(selected);
-    } else {
-      // Optionally, ignore or reset to 'all' if invalid selection
-      setFilterType('all');
-    }
+    setFilterType(e.target.value);
   };
+
+  const filteredProducts =
+    filterType === 'all'
+      ? products
+      : products.filter((product) => product.type.includes(filterType));
 
   const getFullImageUrl = (img) => {
     if (!img) return '/images/default_image.png';
@@ -70,16 +72,16 @@ const ReadProducts = () => {
             <option value="all">All</option>
             {types.map((type) => (
               <option key={type} value={type}>
-                {type}
+                {type.charAt(0).toUpperCase() + type.slice(1)}
               </option>
             ))}
           </select>
         </div>
 
         {/* Product Grid */}
-        {products.length > 0 ? (
+        {filteredProducts.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-            {products.map((product) => (
+            {filteredProducts.map((product) => (
               <div
                 key={product.id}
                 className="bg-white rounded-2xl shadow-md overflow-hidden flex flex-col"

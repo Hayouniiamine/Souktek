@@ -4,6 +4,10 @@ import API_BASE_URL from '../config';
 
 const fixedTypes = ["all", "top", "giftcard", "games"];
 
+// Helper to normalize type strings: lowercase and remove underscores/spaces
+const normalizeTypeString = (str) =>
+  str.toLowerCase().replace(/[_\s]/g, '');
+
 const UpdateProduct = () => {
   const [products, setProducts] = useState([]);
   const [filterType, setFilterType] = useState("all");
@@ -23,12 +27,12 @@ const UpdateProduct = () => {
       if (!res.ok) throw new Error("Failed to fetch products");
       const data = await res.json();
 
-      // Normalize type to always be an array of lowercase strings
+      // Normalize type array for each product
       const normalized = data.map(p => ({
         ...p,
         type: Array.isArray(p.type)
-          ? p.type.map(t => t.toLowerCase())
-          : [String(p.type).toLowerCase()],
+          ? p.type.map(normalizeTypeString)
+          : [normalizeTypeString(String(p.type))],
       }));
 
       setProducts(normalized);
@@ -39,9 +43,7 @@ const UpdateProduct = () => {
     }
   }
 
-  // Filter products:
-  // If "all" show all,
-  // else show products where type array includes filterType
+  // Filter products by normalized type
   const filteredProducts =
     filterType === "all"
       ? products

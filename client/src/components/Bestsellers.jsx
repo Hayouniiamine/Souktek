@@ -129,6 +129,8 @@ const ProductSlideshow = ({ products }) => {
             transformStyle: "preserve-3d",
             transform: `rotateY(${-currentIndex * angleStep}deg)`,
             transition: "transform 0.8s cubic-bezier(0.77, 0, 0.175, 1)",
+            // MODIFIED: This prevents the browser from interfering with our swipe gesture
+            touchAction: "pan-y",
           }}
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
@@ -200,7 +202,7 @@ export default function Bestsellers() {
     : gameProducts.slice(0, 5);
 
   return (
-    <section className="bg-[#0e1117] text-white py-8 px-4">
+    <section className="bg-[#0e1117] text-white py-8 px-4 overflow-x-hidden">
       <div className="max-w-screen-xl mx-auto">
         <ProductSlideshow products={topProducts} />
 
