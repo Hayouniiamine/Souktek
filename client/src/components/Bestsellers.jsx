@@ -2,39 +2,63 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import API_BASE_URL from "../config";
 
+// New: A stylish SVG icon to replace the emoji
+const HotIcon = () => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    viewBox="0 0 24 24" 
+    fill="currentColor" 
+    className="w-10 h-10 text-orange-500"
+  >
+    <path 
+      fillRule="evenodd" 
+      d="M12.963 2.286a.75.75 0 00-1.071 1.071l9 9a.75.75 0 001.071-1.071l-9-9zM10.884 5.432a.75.75 0 00-1.06-1.06l-6.5 6.5a.75.75 0 001.06 1.06l6.5-6.5z" 
+      clipRule="evenodd" 
+    />
+    <path 
+      fillRule="evenodd" 
+      d="M9.53 2.22a.75.75 0 010 1.06l-6.5 6.5a.75.75 0 01-1.06-1.06l6.5-6.5a.75.75 0 011.06 0zM12.963 2.286a.75.75 0 00-1.071 1.071l9 9a.75.75 0 001.071-1.071l-9-9z" 
+      clipRule="evenodd" 
+    />
+  </svg>
+);
+
+
 // Card for the 3D Carousel
 const ProductCard = ({ product, isactive }) => {
   if (!product) return null;
 
   return (
-    <div 
-      className={`w-full h-full absolute transition-all duration-500 ease-in-out ${isactive ? 'opacity-100' : 'opacity-60 scale-90'}`}
-    >
-      <div className="bg-[#1a1d23] rounded-2xl overflow-hidden shadow-2xl h-full flex flex-col group">
-        {/* Hot Icon */}
-        <div className="absolute top-3 left-3 bg-red-600/90 text-white text-2xl p-2 rounded-full shadow-lg z-10">
-          🔥
-        </div>
-        <div className="relative overflow-hidden h-2/3">
-          <img
-            src={`${API_BASE_URL}${
-              product.img.startsWith("/images") || product.img.startsWith("/uploads")
-                ? product.img
-                : "/images/" + product.img
-            }`}
-            alt={product.name}
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ease-out"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
-        </div>
-        <div className="p-4 flex flex-col flex-grow justify-center text-center">
-          <h3 className="text-white text-xl font-bold truncate mb-3">{product.name}</h3>
-          <Link 
-            to={`/product/${encodeURIComponent(product.name)}`} 
-            className="bg-white text-black font-bold py-2 px-5 rounded-full self-center group-hover:bg-yellow-400 transition-colors duration-300"
-          >
-            View Details
-          </Link>
+    <div className="relative w-full h-full">
+      {/* Icon is now in a wrapper, positioned outside the card */}
+      <div className="absolute -top-3 -right-3 z-20">
+        <HotIcon />
+      </div>
+      <div 
+        className={`w-full h-full absolute transition-all duration-500 ease-in-out ${isactive ? 'opacity-100' : 'opacity-50 scale-90'}`}
+      >
+        <div className="bg-[#1a1d23] rounded-2xl overflow-hidden shadow-2xl h-full flex flex-col group">
+          <div className="relative overflow-hidden h-2/3">
+            <img
+              src={`${API_BASE_URL}${
+                product.img.startsWith("/images") || product.img.startsWith("/uploads")
+                  ? product.img
+                  : "/images/" + product.img
+              }`}
+              alt={product.name}
+              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ease-out"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+          </div>
+          <div className="p-4 flex flex-col flex-grow justify-center text-center">
+            <h3 className="text-white text-lg font-bold truncate mb-3">{product.name}</h3>
+            <Link 
+              to={`/product/${encodeURIComponent(product.name)}`} 
+              className="bg-white text-black font-bold py-2 px-5 rounded-full self-center group-hover:bg-orange-500 transition-colors duration-300"
+            >
+              View
+            </Link>
+          </div>
         </div>
       </div>
     </div>
@@ -54,7 +78,7 @@ const ProductSlideshow = ({ products }) => {
   };
 
   useEffect(() => {
-    if (products.length === 0) return;
+    if (products.length < 2) return;
     const slideInterval = setInterval(goToNext, 4000);
     return () => clearInterval(slideInterval);
   }, [products.length]);
@@ -63,14 +87,14 @@ const ProductSlideshow = ({ products }) => {
     return null;
   }
   
-  // Reduced radius and card sizes for a more compact look
-  const radius = 200; 
-  const angleStep = 360 / products.length;
+  // Reduced radius and sizes for a more compact, mobile-friendly look
+  const radius = 170; 
+  const angleStep = products.length > 0 ? 360 / products.length : 0;
 
   return (
-    <div className="w-full flex flex-col items-center justify-center mb-16">
-        {/* Main carousel container */}
-        <div className="relative h-[350px] w-full" style={{ perspective: '1000px' }}>
+    // Reduced overall height of the component
+    <div className="w-full flex flex-col items-center justify-center mb-12">
+        <div className="relative h-[320px] w-full" style={{ perspective: '1000px' }}>
             <div 
               className="absolute w-full h-full"
               style={{
@@ -84,8 +108,7 @@ const ProductSlideshow = ({ products }) => {
                 return (
                   <div
                     key={product.id}
-                    // Adjusted card dimensions and positioning
-                    className="absolute w-56 h-80 top-1/2 left-1/2 -mt-40 -ml-28" 
+                    className="absolute w-48 h-72 top-1/2 left-1/2 -mt-36 -ml-24" 
                     style={{
                       transform: `rotateY(${angle}deg) translateZ(${radius}px)`,
                     }}
@@ -97,10 +120,9 @@ const ProductSlideshow = ({ products }) => {
             </div>
         </div>
 
-       {/* Navigation Buttons are now outside the carousel container */}
        <div className="flex gap-8 mt-4 z-20">
             <button onClick={goToPrevious} className="px-6 py-2 bg-white text-black font-semibold rounded-full shadow-md hover:bg-gray-200 transition-all duration-300">
-              Previous
+              Prev
             </button>
             <button onClick={goToNext} className="px-6 py-2 bg-white text-black font-semibold rounded-full shadow-md hover:bg-gray-200 transition-all duration-300">
               Next
@@ -146,17 +168,17 @@ export default function Bestsellers() {
         
         <ProductSlideshow products={topProducts} />
 
-        <h2 className="text-xl font-semibold mb-4">
-          Gift Cards and Subscriptions
+        <h2 className="text-2xl font-bold mb-4 text-center sm:text-left">
+          Gift Cards & Subscriptions
         </h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 md:gap-6">
           {displayedGiftCards.map((product, index) => (
             <Link
               to={`/product/${encodeURIComponent(product.name)}`}
               key={index}
               className="bg-[#1a1d23] p-4 rounded-xl hover:shadow-lg hover:scale-105 transition duration-300 block"
             >
-              <div className="aspect-square flex justify-center items-center overflow-hidden mb-3">
+              <div className="aspect-w-1 aspect-h-1 flex justify-center items-center overflow-hidden mb-3">
                 <img
                   src={
                     product.img
@@ -208,17 +230,17 @@ export default function Bestsellers() {
           </div>
         )}
 
-        <h2 className="text-xl font-semibold mt-16 mb-6">
-          Games Keys and Accounts
+        <h2 className="text-2xl font-bold mt-16 mb-4 text-center sm:text-left">
+          Game Keys & Accounts
         </h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 md:gap-6">
           {displayedGames.map((product, index) => (
             <Link
               to={`/product/${encodeURIComponent(product.name)}`}
               key={index}
               className="bg-[#1a1d23] p-4 rounded-xl hover:shadow-lg hover:scale-105 transition duration-300 block"
             >
-              <div className="aspect-square flex justify-center items-center overflow-hidden mb-3">
+              <div className="aspect-w-1 aspect-h-1 flex justify-center items-center overflow-hidden mb-3">
                 <img
                   src={
                     product.img

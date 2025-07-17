@@ -101,8 +101,9 @@ export default function ProductPage() {
                 className="w-12 h-12 rounded-md"
               />
               <div>
+                {/* MODIFIED LINE: Removed the price from this text */}
                 <div className="text-sm font-semibold">
-                  {product.name} - DT{Number(option.price).toFixed(2)} ({option.label})
+                  {product.name} ({option.label})
                 </div>
                 <div className="text-xs text-gray-400">{option.description}</div>
               </div>
@@ -113,6 +114,7 @@ export default function ProductPage() {
                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded flex items-center gap-2"
                 onClick={() => {
                   addToCart(option, product);
+
                   navigate('/basket');
                 }}
               >
