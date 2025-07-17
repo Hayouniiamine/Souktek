@@ -235,15 +235,31 @@ app.get("/api/products/name/:name", async (req, res) => {
 });
 
 // Fetch all products from the database
+// Fetch products optionally filtered by a type in their type array
 app.get("/api/products", async (req, res) => {
+  const { type } = req.query;
+
   try {
-    const result = await pool.query("SELECT * FROM products");
+    let query, values;
+
+    if (type) {
+      // Use the PostgreSQL ANY operator to check if type is in the array
+      query = `SELECT * FROM products WHERE $1 = ANY(type) ORDER BY id ASC`;
+      values = [type];
+    } else {
+      // If no type filter, return all products
+      query = `SELECT * FROM products ORDER BY id ASC`;
+      values = [];
+    }
+
+    const result = await pool.query(query, values);
     res.json(result.rows);
   } catch (err) {
     console.error("Error fetching products:", err);
     res.status(500).json({ message: "Error fetching products" });
   }
 });
+
 
 // Fetch a specific product by its ID
 app.get("/api/products/:id", async (req, res) => {
