@@ -28,7 +28,7 @@ const ProductCard = ({ product, isactive }) => {
               src={`${API_BASE_URL}${
                 product.img.startsWith("/images") || product.img.startsWith("/uploads")
                   ? product.img
-                  : "/images/" + product.img
+                  : "/images/" + product.im
               }`}
               alt={product.name}
               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ease-out"
