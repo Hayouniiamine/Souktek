@@ -2,38 +2,13 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import API_BASE_URL from "../config";
 
-// New: An animated SVG flame icon
-const AnimatedFlameIcon = () => (
-  <>
-    <style>
-      {`
-        @keyframes flicker {
-          0%, 100% { transform: scaleY(1) rotate(1deg); opacity: 1; }
-          50% { transform: scaleY(1.05) rotate(-1deg); opacity: 0.9; }
-        }
-        .flame-path {
-          transform-origin: bottom center;
-          animation: flicker 1.2s ease-in-out infinite;
-        }
-      `}
-    </style>
-    <svg
-      viewBox="0 0 24 24"
-      className="w-12 h-12"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <g className="flame-path">
-        <path
-          fill="#FF6B00"
-          d="M12.1,2.1C11.3,4.4,9.8,6.4,8,7.9C6.2,9.4,4,10.2,4,12.8c0,2.6,2.2,4.8,4.8,4.8c1.1,0,2.2-0.4,3-1.1 c0.8,0.7,1.8,1.1,3,1.1c2.6,0,4.8-2.2,4.8-4.8C19.6,10.2,17.4,9.4,15.6,7.9C13.8,6.4,12.3,4.4,12.1,2.1z"
-        />
-        <path
-          fill="#FFC107"
-          d="M12.8,7.1c-0.4,1.2-1.2,2.2-2.2,2.9c-1,0.7-2.1,1.1-2.1,2.4c0,1.3,1.1,2.4,2.4,2.4c0.6,0,1.1-0.2,1.5-0.5 c0.4,0.3,0.9,0.5,1.5,0.5c1.3,0,2.4-1.1,2.4-2.4C16.4,10.4,15.3,10,14.3,9.3C13.3,8.6,12.6,7.6,12.8,7.1z"
-        />
-      </g>
-    </svg>
-  </>
+// New: A stylish "Bestselling" banner component
+const BestsellingIcon = () => (
+  <div className="absolute top-0 right-0 w-24 h-24 overflow-hidden z-10 pointer-events-none">
+    <div className="absolute top-6 -right-8 w-32 text-center transform rotate-45 bg-yellow-400 text-black text-xs font-bold uppercase py-1 shadow-lg">
+      Bestselling
+    </div>
+  </div>
 );
 
 
@@ -43,14 +18,11 @@ const ProductCard = ({ product, isactive }) => {
 
   return (
     <div className="relative w-full h-full">
-      {/* Icon is now in a wrapper, positioned outside the card */}
-      <div className="absolute -top-4 -right-4 z-20">
-        <AnimatedFlameIcon />
-      </div>
       <div 
         className={`w-full h-full absolute transition-all duration-500 ease-in-out ${isactive ? 'opacity-100' : 'opacity-50 scale-90'}`}
       >
-        <div className="bg-[#1a1d23] rounded-2xl overflow-hidden shadow-2xl h-full flex flex-col group">
+        <div className="relative bg-[#1a1d23] rounded-2xl overflow-hidden shadow-2xl h-full flex flex-col group">
+          <BestsellingIcon />
           <div className="relative overflow-hidden h-2/3">
             <img
               src={`${API_BASE_URL}${
