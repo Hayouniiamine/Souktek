@@ -306,7 +306,7 @@ export default function Bestsellers() {
             <div className="text-3xl mb-2">📧</div>
             <h3 className="font-semibold text-lg"> Email delivery</h3>
             <p className="text-gray-400 text-sm mt-1">
-              Your digital Gift card is ready to use within 10 minutes.
+              Your digital Gift card is ready to use within Ten minutes.
             </p>
           </div>
           <div>
