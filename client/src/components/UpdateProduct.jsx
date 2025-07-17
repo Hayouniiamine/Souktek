@@ -2,9 +2,9 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API_BASE_URL from "../config";
 
-const fixedTypes = ["all", "top", "giftcard", "games"];
+const fixedTypes = ["all", "top", "gift_cards", "games"];
 
-// Normalize strings (e.g. gift_cards → giftcard)
+// Normalize strings (e.g. gift_cards → giftcards)
 const normalizeTypeString = (str) =>
   str.toLowerCase().replace(/[_\s]/g, "");
 
@@ -27,7 +27,6 @@ const UpdateProduct = () => {
       if (!res.ok) throw new Error("Failed to fetch products");
       const data = await res.json();
 
-      // Normalize the `type` field
       const normalized = data.map((product) => ({
         ...product,
         type: Array.isArray(product.type)
@@ -46,7 +45,9 @@ const UpdateProduct = () => {
   const filteredProducts =
     filterType === "all"
       ? products
-      : products.filter((product) => product.type.includes(filterType));
+      : products.filter((product) =>
+          product.type.includes(normalizeTypeString(filterType))
+        );
 
   const handleFilterChange = (e) => {
     setFilterType(e.target.value);
@@ -81,7 +82,7 @@ const UpdateProduct = () => {
               <option key={type} value={type}>
                 {type === "all"
                   ? "All Types"
-                  : type.charAt(0).toUpperCase() + type.slice(1)}
+                  : type.replace(/_/g, " ").replace(/^\w/, c => c.toUpperCase())}
               </option>
             ))}
           </select>

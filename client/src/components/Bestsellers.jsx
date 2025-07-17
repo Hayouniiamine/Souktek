@@ -129,7 +129,6 @@ const ProductSlideshow = ({ products }) => {
             transformStyle: "preserve-3d",
             transform: `rotateY(${-currentIndex * angleStep}deg)`,
             transition: "transform 0.8s cubic-bezier(0.77, 0, 0.175, 1)",
-            // MODIFIED: This prevents the browser from interfering with our swipe gesture
             touchAction: "pan-y",
           }}
           onTouchStart={onTouchStart}
