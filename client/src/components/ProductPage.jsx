@@ -31,7 +31,9 @@ export default function ProductPage() {
         const data = await res.json();
         setProduct(data);
 
-        const optionsRes = await fetch(`${API_BASE_URL}/api/product_options/${data.id}`);
+        const optionsRes = await fetch(
+          `${API_BASE_URL}/api/product_options/${data.id}`
+        );
         if (!optionsRes.ok) throw new Error("Options not found");
         const optionsData = await optionsRes.json();
         setOptions(optionsData);
@@ -61,13 +63,16 @@ export default function ProductPage() {
 
   if (loading) return <div className="text-white p-4">Loading...</div>;
   if (error) return <div className="text-red-500 p-4">{error}</div>;
-  if (!product) return <div className="text-white p-4">Product data is not available.</div>;
+  if (!product)
+    return <div className="text-white p-4">Product data is not available.</div>;
 
   // Fix for image URL supporting /images and /uploads folders
   const getFullImageUrl = (img) => {
     if (!img) return "/images/default_image.png";
     return `${API_BASE_URL}${
-      img.startsWith("/images") || img.startsWith("/uploads") ? img : "/images/" + img
+      img.startsWith("/images") || img.startsWith("/uploads")
+        ? img
+        : "/images/" + img
     }`;
   };
 
@@ -77,7 +82,11 @@ export default function ProductPage() {
     <div className="bg-[#0e1117] min-h-screen text-white">
       {/* Hero */}
       <div className="bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500 p-8 flex flex-col md:flex-row gap-6 items-center justify-center">
-        <img src={imageUrl} alt={product.name} className="max-h-32 object-contain" />
+        <img
+          src={imageUrl}
+          alt={product.name}
+          className="max-h-32 object-contain"
+        />
         <div className="text-center md:text-left max-w-xl">
           <h1 className="text-3xl font-bold mb-2">{product.name}</h1>
           <p className="text-white text-sm mb-1">{product.description}</p>
@@ -92,30 +101,37 @@ export default function ProductPage() {
         {options.map((option) => (
           <div
             key={option.id}
-            className="bg-[#1c222c] mb-3 p-4 rounded-xl flex justify-between items-center hover:shadow-lg"
+            // MODIFIED: Added responsive flex classes
+            className="bg-[#1c222c] mb-3 p-4 rounded-xl flex flex-col sm:flex-row sm:justify-between sm:items-center hover:shadow-lg gap-4"
           >
+            {/* Left side (image and text) */}
             <div className="flex items-center gap-4">
               <img
                 src={imageUrl}
                 alt={product.name}
-                className="w-12 h-12 rounded-md"
+                className="w-12 h-12 rounded-md flex-shrink-0"
               />
               <div>
-                {/* MODIFIED LINE: Removed the price from this text */}
                 <div className="text-sm font-semibold">
                   {product.name} ({option.label})
                 </div>
-                <div className="text-xs text-gray-400">{option.description}</div>
+                {/* This description will now be visible on mobile */}
+                <div className="text-xs text-gray-400 mt-1">
+                  {option.description}
+                </div>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="text-white font-bold">DT{Number(option.price).toFixed(2)}</div>
+
+            {/* Right side (price and button) */}
+            <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
+              <div className="text-white font-bold text-lg">
+                DT{Number(option.price).toFixed(2)}
+              </div>
               <button
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded flex items-center gap-2"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
                 onClick={() => {
                   addToCart(option, product);
-
-                  navigate('/basket');
+                  navigate("/basket");
                 }}
               >
                 <ShoppingCart size={16} /> Buy Now
