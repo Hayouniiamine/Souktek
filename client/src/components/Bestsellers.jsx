@@ -12,6 +12,8 @@ const ProductCard = ({ product, isactive }) => {
         className={`w-full h-full absolute transition-all duration-500 ease-in-out ${
           isactive ? "opacity-100" : "opacity-50 scale-90"
         }`}
+        // The fix below helps browsers render 3D transforms more smoothly
+        style={{ backfaceVisibility: "hidden", transform: "translateZ(0px)" }}
       >
         <div className="relative bg-[#1a1d23] rounded-2xl overflow-hidden shadow-2xl h-full flex flex-col group">
           <div className="relative overflow-hidden h-2/3">
