@@ -74,8 +74,8 @@ const ProductSlideshow = ({ products }) => {
     return null;
   }
 
-  // MODIFIED: Increased radius to add a bit more space between cards
-  const radius = 190;
+  // MODIFIED: Increased radius to add more space between cards
+  const radius = 220;
   const angleStep = products.length > 0 ? 360 / products.length : 0;
 
   return (
