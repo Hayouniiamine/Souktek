@@ -56,7 +56,7 @@ export default function Navbar() {
           <Link to="/">
             {/* Increased logo size and width */}
             <img
-              src="uploads/1752415767378.png"
+              src="uploads/1752752377367.png"
               alt="Souktek Logo"
               className="h-12 w-32 sm:h-14 sm:w-40 object-contain cursor-pointer"
             />

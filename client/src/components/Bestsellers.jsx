@@ -2,33 +2,25 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import API_BASE_URL from "../config";
 
-// New: A stylish "Bestselling" banner component
-const BestsellingIcon = () => (
-  <div className="absolute top-0 right-0 w-24 h-24 overflow-hidden z-10 pointer-events-none">
-    <div className="absolute top-6 -right-8 w-32 text-center transform rotate-45 bg-yellow-400 text-black text-xs font-bold uppercase py-1 shadow-lg">
-      Bestselling
-    </div>
-  </div>
-);
-
-
-// Card for the 3D Carousel
+// Card for the 3D Carousel (Icon removed)
 const ProductCard = ({ product, isactive }) => {
   if (!product) return null;
 
   return (
     <div className="relative w-full h-full">
-      <div 
-        className={`w-full h-full absolute transition-all duration-500 ease-in-out ${isactive ? 'opacity-100' : 'opacity-50 scale-90'}`}
+      <div
+        className={`w-full h-full absolute transition-all duration-500 ease-in-out ${
+          isactive ? "opacity-100" : "opacity-50 scale-90"
+        }`}
       >
         <div className="relative bg-[#1a1d23] rounded-2xl overflow-hidden shadow-2xl h-full flex flex-col group">
-          <BestsellingIcon />
           <div className="relative overflow-hidden h-2/3">
             <img
               src={`${API_BASE_URL}${
-                product.img.startsWith("/images") || product.img.startsWith("/uploads")
+                product.img.startsWith("/images") ||
+                product.img.startsWith("/uploads")
                   ? product.img
-                  : "/images/" + product.im
+                  : "/images/" + product.img
               }`}
               alt={product.name}
               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ease-out"
@@ -36,9 +28,11 @@ const ProductCard = ({ product, isactive }) => {
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
           </div>
           <div className="p-4 flex flex-col flex-grow justify-center text-center">
-            <h3 className="text-white text-lg font-bold truncate mb-3">{product.name}</h3>
-            <Link 
-              to={`/product/${encodeURIComponent(product.name)}`} 
+            <h3 className="text-white text-lg font-bold truncate mb-3">
+              {product.name}
+            </h3>
+            <Link
+              to={`/product/${encodeURIComponent(product.name)}`}
               className="bg-white text-black font-bold py-2 px-5 rounded-full self-center group-hover:bg-orange-500 transition-colors duration-300"
             >
               View
@@ -55,11 +49,17 @@ const ProductSlideshow = ({ products }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const goToNext = () => {
-    setCurrentIndex((prevIndex) => (prevIndex + 1) % products.length);
+    if (products.length > 0) {
+      setCurrentIndex((prevIndex) => (prevIndex + 1) % products.length);
+    }
   };
-  
+
   const goToPrevious = () => {
-    setCurrentIndex((prevIndex) => (prevIndex - 1 + products.length) % products.length);
+    if (products.length > 0) {
+      setCurrentIndex(
+        (prevIndex) => (prevIndex - 1 + products.length) % products.length
+      );
+    }
   };
 
   useEffect(() => {
@@ -71,50 +71,69 @@ const ProductSlideshow = ({ products }) => {
   if (!products || products.length === 0) {
     return null;
   }
-  
-  const radius = 170; 
+
+  const radius = 170;
   const angleStep = products.length > 0 ? 360 / products.length : 0;
 
   return (
     <div className="w-full flex flex-col items-center justify-center mb-12">
-        <div className="relative h-[320px] w-full" style={{ perspective: '1000px' }}>
-            <div 
-              className="absolute w-full h-full"
-              style={{
-                transformStyle: 'preserve-3d',
-                transform: `rotateY(${-currentIndex * angleStep}deg)`,
-                transition: 'transform 0.8s cubic-bezier(0.77, 0, 0.175, 1)',
-              }}
-            >
-              {products.map((product, index) => {
-                const angle = index * angleStep;
-                return (
-                  <div
-                    key={product.id}
-                    className="absolute w-48 h-72 top-1/2 left-1/2 -mt-36 -ml-24" 
-                    style={{
-                      transform: `rotateY(${angle}deg) translateZ(${radius}px)`,
-                    }}
-                  >
-                    <ProductCard product={product} isactive={currentIndex === index} />
-                  </div>
-                );
-              })}
-            </div>
+      {/* New: Centered Bestselling Banner */}
+      <div className="mb-6 flex justify-center">
+        <div className="bg-yellow-400 text-black font-bold uppercase tracking-wider px-8 py-2 rounded-full shadow-lg">
+          Bestsellers
         </div>
+      </div>
 
-       <div className="flex gap-8 mt-4 z-20">
-            <button onClick={goToPrevious} className="px-6 py-2 bg-white text-black font-semibold rounded-full shadow-md hover:bg-gray-200 transition-all duration-300">
-              Prev
-            </button>
-            <button onClick={goToNext} className="px-6 py-2 bg-white text-black font-semibold rounded-full shadow-md hover:bg-gray-200 transition-all duration-300">
-              Next
-            </button>
+      <div
+        className="relative h-[320px] w-full"
+        style={{ perspective: "1000px" }}
+      >
+        <div
+          className="absolute w-full h-full"
+          style={{
+            transformStyle: "preserve-3d",
+            transform: `rotateY(${-currentIndex * angleStep}deg)`,
+            transition: "transform 0.8s cubic-bezier(0.77, 0, 0.175, 1)",
+          }}
+        >
+          {products.map((product, index) => {
+            const angle = index * angleStep;
+            return (
+              <div
+                key={product.id}
+                className="absolute w-48 h-72 top-1/2 left-1/2 -mt-36 -ml-24"
+                style={{
+                  transform: `rotateY(${angle}deg) translateZ(${radius}px)`,
+                  backfaceVisibility: "hidden", // Fix for 3D rendering glitch
+                }}
+              >
+                <ProductCard
+                  product={product}
+                  isactive={currentIndex === index}
+                />
+              </div>
+            );
+          })}
         </div>
+      </div>
+
+      <div className="flex gap-8 mt-4 z-20">
+        <button
+          onClick={goToPrevious}
+          className="px-6 py-2 bg-white text-black font-semibold rounded-full shadow-md hover:bg-gray-200 transition-all duration-300"
+        >
+          Prev
+        </button>
+        <button
+          onClick={goToNext}
+          className="px-6 py-2 bg-white text-black font-semibold rounded-full shadow-md hover:bg-gray-200 transition-all duration-300"
+        >
+          Next
+        </button>
+      </div>
     </div>
   );
 };
-
 
 export default function Bestsellers() {
   const [products, setProducts] = useState([]);
@@ -143,12 +162,13 @@ export default function Bestsellers() {
   const displayedGiftCards = showAllGiftCards
     ? giftCardProducts
     : giftCardProducts.slice(0, 10);
-  const displayedGames = showAllGames ? gameProducts : gameProducts.slice(0, 5);
+  const displayedGames = showAllGames
+    ? gameProducts
+    : gameProducts.slice(0, 5);
 
   return (
     <section className="bg-[#0e1117] text-white py-8 px-4">
       <div className="max-w-screen-xl mx-auto">
-        
         <ProductSlideshow products={topProducts} />
 
         <h2 className="text-2xl font-bold mb-4 text-center sm:text-left">
@@ -180,7 +200,9 @@ export default function Bestsellers() {
               <div className="text-sm font-semibold truncate">
                 {product.name}
               </div>
-              <div className="text-gray-400 text-xs mt-1">{product.price}</div>
+              <div className="text-gray-400 text-xs mt-1">
+                {product.price}
+              </div>
             </Link>
           ))}
         </div>
@@ -242,7 +264,9 @@ export default function Bestsellers() {
               <div className="text-sm font-semibold truncate">
                 {product.name}
               </div>
-              <div className="text-gray-400 text-xs mt-1">{product.price}</div>
+              <div className="text-gray-400 text-xs mt-1">
+                {product.price}
+              </div>
             </Link>
           ))}
         </div>
