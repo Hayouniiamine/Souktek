@@ -8,8 +8,7 @@ export default function Footer() {
     "netflix.webp", "playstation.webp", "rewarble-chatgpt.webp", "rewarble-discord.webp",
     "rewarble-tiktok-ads.webp", "starzaplay.png", "steam.webp", "tinder.webp", "Shahid.png",
     "surfshark.png", "prepexility.jpg", "xbox.png", "tod.png", "Gemini_Advanced.png",
-    "disney.webp", "google.webp", "picture.png", "spotify.webp", "roblox.webp", "tinder.webp",
-    "osn.png",
+    "disney.webp", "google.webp", "picture.png", "spotify.webp", "roblox.webp"
   ];
 
   const handleTermsClick = () => {

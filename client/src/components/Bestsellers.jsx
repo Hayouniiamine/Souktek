@@ -74,7 +74,8 @@ const ProductSlideshow = ({ products }) => {
     return null;
   }
 
-  const radius = 170;
+  // MODIFIED: Increased radius to add a bit more space between cards
+  const radius = 190;
   const angleStep = products.length > 0 ? 360 / products.length : 0;
 
   return (
@@ -306,7 +307,7 @@ export default function Bestsellers() {
             <div className="text-3xl mb-2">📧</div>
             <h3 className="font-semibold text-lg"> Email delivery</h3>
             <p className="text-gray-400 text-sm mt-1">
-              Your digital Gift card is ready to use within Ten minutes.
+              Your digital Gift card is ready to use within 10 minutes.
             </p>
           </div>
           <div>

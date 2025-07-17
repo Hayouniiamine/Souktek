@@ -23,8 +23,14 @@ const UpdateProduct = () => {
       const data = await res.json();
       setProducts(data);
 
+      // Extract unique types from all products
       const uniqueTypes = Array.from(new Set(data.map((p) => p.type))).filter(Boolean);
       setTypes(uniqueTypes);
+
+      // If current filterType is invalid, reset to "all"
+      if (filterType !== "all" && !uniqueTypes.includes(filterType)) {
+        setFilterType("all");
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -32,18 +38,29 @@ const UpdateProduct = () => {
     }
   }
 
-  // Helper to generate full image URL
+  // Filter products based on current filterType
+  const filteredProducts =
+    filterType === "all"
+      ? products
+      : products.filter((product) => product.type === filterType);
+
+  // Handle filter changes — only accept valid types or "all"
+  const handleFilterChange = (e) => {
+    const selected = e.target.value;
+    if (selected === "all" || types.includes(selected)) {
+      setFilterType(selected);
+    } else {
+      setFilterType("all"); // fallback to all if invalid
+    }
+  };
+
+  // Helper for full image URL
   const getFullImageUrl = (img) => {
     if (!img) return "/images/default_image.png";
     return `${API_BASE_URL}${
       img.startsWith("/images") || img.startsWith("/uploads") ? img : "/images/" + img
     }`;
   };
-
-  const filteredProducts =
-    filterType === "all"
-      ? products
-      : products.filter((product) => product.type === filterType);
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
@@ -59,7 +76,7 @@ const UpdateProduct = () => {
           </label>
           <select
             id="filterType"
-            onChange={(e) => setFilterType(e.target.value)}
+            onChange={handleFilterChange}
             value={filterType}
             className="p-2 border border-gray-300 rounded-md shadow-sm bg-white text-black focus:outline-none focus:ring-2 focus:ring-blue-500"
           >

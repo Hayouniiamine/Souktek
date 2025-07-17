@@ -8,26 +8,41 @@ const DeleteProduct = () => {
   const [filterType, setFilterType] = useState("all");
   const [types, setTypes] = useState([]);
 
+  // Fetch all types on mount
+  useEffect(() => {
+    const fetchAllTypes = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/products`);
+        const data = await res.json();
+        setTypes(Array.from(new Set(data.map(p => p.type))).filter(Boolean));
+      } catch (error) {
+        console.error("Error fetching product types:", error);
+      }
+    };
+    fetchAllTypes();
+  }, []);
+
+  // Fetch products when filterType changes
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/products`);
+        let url = `${API_BASE_URL}/api/products`;
+        if (filterType !== "all") {
+          url = `${API_BASE_URL}/api/products/type/${encodeURIComponent(filterType)}`;
+        }
+
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("Failed to fetch products");
         const data = await response.json();
         setProducts(data);
-
-        const uniqueTypes = Array.from(new Set(data.map((p) => p.type))).filter(Boolean);
-        setTypes(uniqueTypes);
       } catch (error) {
         console.error("Error fetching products:", error);
+        setProducts([]); // clear products on error
       }
     };
-    fetchProducts();
-  }, []);
 
-  const filteredProducts =
-    filterType === "all"
-      ? products
-      : products.filter((product) => product.type === filterType);
+    fetchProducts();
+  }, [filterType]);
 
   // Helper to get full image URL
   const getFullImageUrl = (img) => {
@@ -55,6 +70,7 @@ const DeleteProduct = () => {
 
         if (response.ok) {
           alert("✅ Product deleted successfully!");
+          // Remove the deleted product locally
           setProducts(products.filter((product) => product.id !== id));
           navigate("/admin-dashboard");
         } else {
@@ -92,7 +108,7 @@ const DeleteProduct = () => {
 
         {products.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-            {filteredProducts.map((product) => (
+            {products.map((product) => (
               <div
                 key={product.id}
                 className="bg-white rounded-2xl shadow-md overflow-hidden flex flex-col"

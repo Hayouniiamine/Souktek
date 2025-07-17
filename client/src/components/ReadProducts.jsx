@@ -9,27 +9,41 @@ const ReadProducts = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/products`);
+        const url =
+          filterType === 'all'
+            ? `${API_BASE_URL}/api/products`
+            : `${API_BASE_URL}/api/products?type=${encodeURIComponent(filterType)}`;
+
+        const response = await fetch(url);
         const data = await response.json();
         setProducts(data);
 
-        // Extract unique product types from fetched data, ignoring falsy values
-        const uniqueTypes = Array.from(new Set(data.map((p) => p.type))).filter(Boolean);
-        setTypes(uniqueTypes);
+        if (filterType === 'all') {
+          // Get unique product types
+          const allTypes = Array.from(
+            new Set(data.flatMap((p) => (Array.isArray(p.type) ? p.type : [p.type])))
+          ).filter(Boolean);
+          setTypes(allTypes);
+        }
       } catch (error) {
         console.error('Error fetching products:', error);
       }
     };
+
     fetchProducts();
-  }, []);
+  }, [filterType]);
 
-  // Filter products by selected type; show all if filterType is 'all'
-  const filteredProducts =
-    filterType === 'all'
-      ? products
-      : products.filter((product) => product.type === filterType);
+  // Only update filterType if the selected type exists or is "all"
+  const handleFilterChange = (e) => {
+    const selected = e.target.value;
+    if (selected === 'all' || types.includes(selected)) {
+      setFilterType(selected);
+    } else {
+      // Optionally, ignore or reset to 'all' if invalid selection
+      setFilterType('all');
+    }
+  };
 
-  // Helper to get full image URL, supporting /images and /uploads paths
   const getFullImageUrl = (img) => {
     if (!img) return '/images/default_image.png';
     return `${API_BASE_URL}${
@@ -50,7 +64,7 @@ const ReadProducts = () => {
           <select
             id="filter"
             value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
+            onChange={handleFilterChange}
             className="p-2 border border-gray-400 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 text-gray-900"
           >
             <option value="all">All</option>
@@ -65,7 +79,7 @@ const ReadProducts = () => {
         {/* Product Grid */}
         {products.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-            {filteredProducts.map((product) => (
+            {products.map((product) => (
               <div
                 key={product.id}
                 className="bg-white rounded-2xl shadow-md overflow-hidden flex flex-col"
