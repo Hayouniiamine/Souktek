@@ -15,9 +15,9 @@ export default function Bestsellers() {
       .catch((err) => console.error("Failed to load products:", err));
   }, []);
 
-  const giftCardProducts = products.filter((p) => p.type === "gift_cards");
-  const gameProducts = products.filter((p) => p.type === "games");
-  const bestsellerProducts = products.filter((p) => p.type === "bestsellers");
+  const giftCardProducts = products.filter((p) => p.type.includes("gift_cards"));
+  const gameProducts = products.filter((p) => p.type.includes("games"));
+  const bestsellerProducts = products.filter((p) => p.type.includes("bestsellers"));
 
   const displayedGiftCards = showAllGiftCards
     ? giftCardProducts

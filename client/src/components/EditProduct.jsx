@@ -283,70 +283,69 @@ const EditProduct = () => {
                   <img
                     src={getFullImageUrl(product.img)}
                     alt="Current"
-                    className="max-h-40 rounded shadow"
+                    className="max-w-xs rounded-lg"
                   />
                 </div>
               )}
             </div>
           </div>
 
-          {/* === Options === */}
-          <div className="border-t pt-6 mt-6">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4">Product Options</h2>
-            {options.length === 0 ? (
-              <p className="text-gray-700">No options for this product.</p>
-            ) : (
-              options.map((opt) => (
-                <div key={opt.id} className="bg-gray-50 p-4 mb-4 rounded-lg shadow-sm">
-                  <h3 className="text-xl font-bold mb-3 text-black">Option: {opt.label}</h3>
+          {/* === Product Options === */}
+          <div>
+            <h2 className="text-2xl font-bold mb-4 text-gray-700">Product Options</h2>
 
-                  <div className="mb-2">
-                    <label className="block font-semibold text-black mb-1">Label</label>
-                    <input
-                      type="text"
-                      value={editedOptions[opt.id]?.label ?? ""}
-                      onChange={(e) => handleOptionChange(opt.id, "label", e.target.value)}
-                      className={inputClass}
-                    />
-                  </div>
+            {options.length === 0 && <p>No options found for this product.</p>}
 
-                  <div className="mb-2">
-                    <label className="block font-semibold text-black mb-1">Price (DT)</label>
-                    <input
-                      type="text"
-                      value={editedOptions[opt.id]?.price ?? ""}
-                      onChange={(e) => handleOptionChange(opt.id, "price", e.target.value)}
-                      className={inputClass}
-                    />
-                  </div>
+            {options.map((option) => (
+              <div
+                key={option.id}
+                className="mb-6 p-4 bg-gray-200 rounded-lg border border-gray-300"
+              >
+                <label className="block font-semibold text-black mb-1">Label</label>
+                <input
+                  type="text"
+                  value={editedOptions[option.id]?.label || ""}
+                  onChange={(e) => handleOptionChange(option.id, "label", e.target.value)}
+                  className={inputClass}
+                />
 
-                  <div className="mb-2">
-                    <label className="block font-semibold text-black mb-1">Description</label>
-                    <textarea
-                      rows={3}
-                      value={editedOptions[opt.id]?.description ?? ""}
-                      onChange={(e) => handleOptionChange(opt.id, "description", e.target.value)}
-                      className={`${inputClass} resize-none`}
-                    />
-                  </div>
+                <label className="block font-semibold text-black mt-4 mb-1">Price</label>
+                <input
+                  type="text"
+                  value={editedOptions[option.id]?.price || ""}
+                  onChange={(e) => handleOptionChange(option.id, "price", e.target.value)}
+                  className={inputClass}
+                />
 
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteOption(opt.id)}
-                    className="mt-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
-                  >
-                    🗑️ Delete Option
-                  </button>
-                </div>
-              ))
-            )}
+                <label className="block font-semibold text-black mt-4 mb-1">Description</label>
+                <textarea
+                  value={editedOptions[option.id]?.description || ""}
+                  onChange={(e) => handleOptionChange(option.id, "description", e.target.value)}
+                  className={`${inputClass} resize-none`}
+                  rows={3}
+                />
+
+                <button
+                  type="button"
+                  onClick={() => handleDeleteOption(option.id)}
+                  className="mt-4 bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg"
+                >
+                  Delete Option
+                </button>
+              </div>
+            ))}
           </div>
+
+          {/* === Submit Button and Error === */}
+          {error && (
+            <p className="text-red-600 text-center font-semibold mb-4">{error}</p>
+          )}
 
           <button
             type="submit"
-            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-lg mt-6"
+            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-lg transition duration-300"
           >
-            Update Product & Options
+            Save Changes
           </button>
         </form>
       </div>
